@@ -2,6 +2,17 @@
 # yarn lockfile v1
 
 
+"@aparajita/capacitor-secure-storage@^8.0.1":
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/@aparajita/capacitor-secure-storage/-/capacitor-secure-storage-8.0.1.tgz#c5beec3be06ec3b25dbc5e28cb4b988172413d74"
+  integrity sha512-NSYIQtH6TyBgL3myumQGcCE3iecq2PtGNFlGxl1fJKEU37Dv5DudzDlwg42cgbVxCm1ay72g4X7rTSAvKULsVg==
+  dependencies:
+    "@capacitor/android" "^8.0.2"
+    "@capacitor/app" "^8.0.0"
+    "@capacitor/core" "^8.0.2"
+    "@capacitor/ios" "^8.0.2"
+    "@capacitor/keyboard" "^8.0.0"
+
 "@capacitor-community/bluetooth-le@^8.3.0":
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/@capacitor-community/bluetooth-le/-/bluetooth-le-8.3.0.tgz#e0004d926823e6e1ae4092808b09c8f28b11bd5f"
@@ -16,12 +27,12 @@
   dependencies:
     jeep-sqlite "^2.7.2"
 
-"@capacitor/android@^8.5.3":
+"@capacitor/android@^8.0.2", "@capacitor/android@^8.5.3":
   version "8.5.3"
   resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.5.3.tgz#60be0f99326861fcf1b8d252b15850f6cc2a526a"
   integrity sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==
 
-"@capacitor/app@^8.1.2":
+"@capacitor/app@^8.0.0", "@capacitor/app@^8.1.2":
   version "8.1.2"
   resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-8.1.2.tgz#3f39b7b02d2277b3ef6f659747d0d6e56b60a1cc"
   integrity sha512-uKBlsrXH0IdvUn69e/KKYbZ32A06pcrUdG8LWuZ/6y33YMXZXLEEdNSwl+jKS/SrsTWqnePs8EqSWaiQM3mUGA==
@@ -55,7 +66,7 @@
     xcode "^3.0.1"
     xml2js "^0.6.2"
 
-"@capacitor/core@^8.5.3":
+"@capacitor/core@^8.0.2", "@capacitor/core@^8.5.3":
   version "8.5.3"
   resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-8.5.3.tgz#9f4d92fe5eb2d44b01d920190a54ee965e9aeb5d"
   integrity sha512-oBE1oGuYE4ZzYYrulC75OuHdSsD6zLUy7d5o1tFwDLG4govGoubY15cxpiI5l0+q87Lm5p0bhbehMdzJg4aFag==
@@ -73,6 +84,16 @@
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@capacitor/haptics/-/haptics-8.0.2.tgz#821d2687b81ff8855327273314d0d146476f069f"
   integrity sha512-c2hZzRR5Fk1tbTvhG1jhh2XBAf3EhnIerMIb2sl7Mt41Gxx1fhBJFDa0/BI1IbY4loVepyyuqNC9820/GZuoWQ==
+
+"@capacitor/ios@^8.0.2":
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/ios/-/ios-8.5.3.tgz#3bed5ce0673bc04ad9a961458337658472388c52"
+  integrity sha512-HnnV92Jl8+3x0JUloXUMjFcUsQI8wHFVsKwkLn72DfRZXYGZW11tQbmNOWOnRTljaU18FdI1b9ipT09SzzPDNw==
+
+"@capacitor/keyboard@^8.0.0":
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-8.0.6.tgz#361304068b7319ead091a83b846861deb2fb3639"
+  integrity sha512-Bbe+9V0qaT6dzEFJEK7BUWR01l2+vZE8FM5ITF/WgKtx+G6eGZ6d5+YiSMRJBAK0VGjdO59v8yiQ10Doa5KyvQ==
 
 "@capacitor/share@^8.0.3":
   version "8.0.3"

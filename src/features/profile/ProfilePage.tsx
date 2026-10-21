@@ -7,6 +7,7 @@ import { NumberField } from '../../components/NumberField'
 import type { Profile, Sex } from '../../db/repos/profile'
 import { ageOn } from '../../domain/calories'
 import { fromDisplayWeight, toDisplayWeight, type WeightUnit } from '../../domain/units'
+import { openLink, PRIVACY_URL, TERMS_URL } from '../../lib/links'
 import { applyTheme, type ThemePref } from '../../lib/theme'
 import { useHeartRate } from '../../store/heartRate'
 import { useProfile } from '../../store/profile'
@@ -241,6 +242,16 @@ export function ProfilePage() {
       <HeartRateRow />
       <StravaConnection />
       <BackupPanel />
+
+      <p className="text-center text-xs text-subtle">
+        <button onClick={() => openLink(PRIVACY_URL)} className="underline">
+          Privacy Policy
+        </button>
+        {' · '}
+        <button onClick={() => openLink(TERMS_URL)} className="underline">
+          Terms of Use
+        </button>
+      </p>
 
       <Link to="/exercises" className="flex items-center gap-3 rounded-xl bg-surface p-4">
         <Dumbbell size={18} className="text-accent-ink" />

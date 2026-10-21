@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# The app's own native code (heart rate service, rest alarm, theme plugin) is
+# reached from Capacitor by reflection; keep it intact.
+-keep class au.com.adam.gym.** { *; }
+
+# Compile-time-only annotations referenced by Google Tink (via secure storage).
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**

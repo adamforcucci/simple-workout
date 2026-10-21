@@ -12,5 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // web/ is a separate Next.js project with its own tests.
+    exclude: ['**/node_modules/**', 'web/**'],
   },
 })

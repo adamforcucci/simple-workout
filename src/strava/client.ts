@@ -1,26 +1,29 @@
 import { CapacitorHttp } from '@capacitor/core'
 import { getDb } from '../db/client'
 import { getHrSamples } from '../db/repos/hr'
-import { deleteKey, getJson, setJson } from '../db/repos/kv'
 import { getSync, saveSync, type StravaSync } from '../db/repos/strava'
 import { getWorkout } from '../db/repos/workouts'
 import type { WeightUnit } from '../domain/units'
+import { clearAuth, readAuth, writeAuth } from './authStore'
 import { buildStrengthUpload, describeWorkout, multipartBody } from './payload'
 
-// Personal, single-user app: the client secret ships in the bundle (from .env).
+// The client ID is public; the secret lives only on our token server (web/),
+// which completes the OAuth exchange and refreshes on the app's behalf.
 const CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID as string | undefined
-const CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET as string | undefined
+const TOKEN_API = (import.meta.env.VITE_TOKEN_API_URL as string | undefined)?.replace(/\/$/, '')
 const API = 'https://www.strava.com/api/v3'
-const AUTH_KEY = 'stravaAuth'
 export const REDIRECT_URI = 'adamsgym://strava.local/callback'
 // activity:read_all lets us read back (and update) what we upload.
 const SCOPE = 'read,activity:write,activity:read_all'
+// Strava data may be cached for at most 7 days (API Policy 6.2).
+const ATHLETE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 export interface StravaAuth {
   accessToken: string
   refreshToken: string
   expiresAt: number // epoch seconds
   athlete: { id: number; firstname: string; lastname: string }
+  athleteFetchedAt?: number // epoch ms
 }
 
 export class StravaError extends Error {
@@ -31,7 +34,7 @@ export class StravaError extends Error {
   }
 }
 
-export const isConfigured = () => !!CLIENT_ID && !!CLIENT_SECRET
+export const isConfigured = () => !!CLIENT_ID && !!TOKEN_API
 
 export function authorizeUrl(): string {
   const url = new URL('https://www.strava.com/oauth/mobile/authorize')
@@ -52,30 +55,36 @@ interface TokenResponse {
   athlete?: StravaAuth['athlete']
 }
 
-async function tokenRequest(params: Record<string, string>): Promise<TokenResponse> {
+async function tokenRequest(path: 'token' | 'refresh', body: Record<string, string>): Promise<TokenResponse> {
   const res = await CapacitorHttp.request({
     method: 'POST',
-    url: 'https://www.strava.com/oauth/token',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    data: { client_id: CLIENT_ID ?? '', client_secret: CLIENT_SECRET ?? '', ...params },
+    url: `${TOKEN_API}/api/strava/${path}`,
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
   })
+  if (res.status === 401) {
+    // The code or refresh token was rejected: the connection is gone.
+    await clearAuth()
+    throw new StravaError('Strava access was revoked — reconnect in Profile', 401)
+  }
   if (res.status !== 200) throw new StravaError(`Strava sign-in failed (${res.status})`, res.status)
   return res.data as TokenResponse
 }
 
 export async function getAuth(): Promise<StravaAuth | undefined> {
-  return getJson<StravaAuth>(await getDb(), AUTH_KEY)
+  return readAuth<StravaAuth>()
 }
 
 export async function exchangeCode(code: string): Promise<StravaAuth> {
-  const t = await tokenRequest({ code, grant_type: 'authorization_code' })
+  const t = await tokenRequest('token', { code })
   const auth: StravaAuth = {
     accessToken: t.access_token,
     refreshToken: t.refresh_token,
     expiresAt: t.expires_at,
     athlete: t.athlete ?? { id: 0, firstname: '', lastname: '' },
+    athleteFetchedAt: Date.now(),
   }
-  await setJson(await getDb(), AUTH_KEY, auth)
+  await writeAuth(auth)
   return auth
 }
 
@@ -84,9 +93,9 @@ async function accessToken(): Promise<string> {
   const auth = await getAuth()
   if (!auth) throw new StravaError('Not connected to Strava')
   if (auth.expiresAt - 60 > Date.now() / 1000) return auth.accessToken
-  const t = await tokenRequest({ refresh_token: auth.refreshToken, grant_type: 'refresh_token' })
+  const t = await tokenRequest('refresh', { refresh_token: auth.refreshToken })
   const next = { ...auth, accessToken: t.access_token, refreshToken: t.refresh_token, expiresAt: t.expires_at }
-  await setJson(await getDb(), AUTH_KEY, next)
+  await writeAuth(next)
   return next.accessToken
 }
 
@@ -97,7 +106,10 @@ async function api<T>(method: string, path: string, init: { data?: unknown; head
     headers: { Authorization: `Bearer ${await accessToken()}`, ...init.headers },
     data: init.data,
   })
-  if (res.status === 401) throw new StravaError('Strava access was revoked — reconnect in Profile', 401)
+  if (res.status === 401) {
+    await clearAuth()
+    throw new StravaError('Strava access was revoked — reconnect in Profile', 401)
+  }
   if (res.status >= 400) {
     const msg = (res.data as { message?: string } | undefined)?.message
     throw new StravaError(`Strava error ${res.status}${msg ? `: ${msg}` : ''}`, res.status)
@@ -105,14 +117,24 @@ async function api<T>(method: string, path: string, init: { data?: unknown; head
   return res.data as T
 }
 
+// Re-reads the athlete's name when the cached copy is over 7 days old.
+export async function refreshAthleteIfStale(): Promise<StravaAuth | undefined> {
+  const auth = await getAuth()
+  if (!auth || Date.now() - (auth.athleteFetchedAt ?? 0) < ATHLETE_MAX_AGE_MS) return auth
+  const a = await api<StravaAuth['athlete']>('GET', '/athlete')
+  const latest = (await getAuth()) ?? auth // tokens may have been refreshed meanwhile
+  const next = { ...latest, athlete: { id: a.id, firstname: a.firstname, lastname: a.lastname }, athleteFetchedAt: Date.now() }
+  await writeAuth(next)
+  return next
+}
+
 export async function disconnect(): Promise<void> {
-  const db = await getDb()
   try {
     await api('POST', 'https://www.strava.com/oauth/deauthorize')
   } catch {
     // Already revoked or offline: forget it locally either way.
   }
-  await deleteKey(db, AUTH_KEY)
+  await clearAuth()
 }
 
 interface UploadResponse {

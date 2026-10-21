@@ -27,9 +27,9 @@ vi.mock('@capacitor/core', async (orig) => ({
   },
 }))
 vi.stubEnv('VITE_STRAVA_CLIENT_ID', '123')
-vi.stubEnv('VITE_STRAVA_CLIENT_SECRET', 'secret')
+vi.stubEnv('VITE_TOKEN_API_URL', 'https://token.test/')
 
-const { uploadWorkout } = await import('./client')
+const { getAuth, refreshAthleteIfStale, uploadWorkout } = await import('./client')
 
 const T0 = Date.UTC(2026, 9, 20, 21, 0, 0) // 8am AEDT on the 21st
 
@@ -160,7 +160,9 @@ describe('upload flow', () => {
       { status: 201, data: { id: 78, status: 'ready', error: null, activity_id: 556 } },
     )
     await uploadWorkout(w.id, 'kg')
-    expect(http.requests[0]).toMatchObject({ url: 'https://www.strava.com/oauth/token', data: { grant_type: 'refresh_token', refresh_token: 'r1' } })
+    // Goes via our token server (the secret isn't in the app), and sends only the refresh token.
+    expect(http.requests[0]).toMatchObject({ url: 'https://token.test/api/strava/refresh', data: { refresh_token: 'r1' } })
+    expect(JSON.stringify(http.requests[0])).not.toMatch(/secret/i)
     expect(http.requests[1].headers?.Authorization).toBe('Bearer new')
     expect(await getJson(db, 'stravaAuth')).toMatchObject({ accessToken: 'new', refreshToken: 'r2' })
   })
@@ -173,6 +175,26 @@ describe('upload flow', () => {
       data: { id: 79, status: 'There was an error', error: "gym-1.json duplicate of <a href='/activities/12345678'>Push</a>", activity_id: null },
     })
     expect(await uploadWorkout(w.id, 'kg')).toMatchObject({ status: 'done', activityId: 12345678 })
+  })
+
+  test('a rejected refresh disconnects instead of retrying forever', async () => {
+    const w = await seedWorkout()
+    await setJson(db, 'stravaAuth', auth(Date.now() / 1000 + 10))
+    http.responses.push({ status: 401, data: { error: 'invalid_grant' } })
+    expect(await uploadWorkout(w.id, 'kg')).toMatchObject({ status: 'error', error: expect.stringContaining('revoked') })
+    expect(await getAuth()).toBeUndefined()
+  })
+
+  test('athlete name is re-read from Strava once it is over 7 days old', async () => {
+    await setJson(db, 'stravaAuth', { ...auth(Date.now() / 1000 + 3600), athleteFetchedAt: Date.now() - 8 * 86_400_000 })
+    http.responses.push({ status: 200, data: { id: 1, firstname: 'Adam', lastname: 'Forcucci', city: 'x' } })
+    const updated = await refreshAthleteIfStale()
+    expect(http.requests[0]).toMatchObject({ method: 'GET', url: 'https://www.strava.com/api/v3/athlete' })
+    expect(updated?.athlete).toEqual({ id: 1, firstname: 'Adam', lastname: 'Forcucci' })
+
+    http.requests = []
+    await refreshAthleteIfStale() // fresh now: no request
+    expect(http.requests).toHaveLength(0)
   })
 
   test('errors are recorded for retry', async () => {

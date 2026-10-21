@@ -1,15 +1,15 @@
 // Spike: confirm Strava renders exercises + muscle map from a JSON strength upload.
 //
 // Usage:
-//   1. Fill VITE_STRAVA_CLIENT_ID / VITE_STRAVA_CLIENT_SECRET in .env
+//   1. Fill VITE_STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET in .env
 //   2. node --env-file=.env scripts/strava-spike.mjs            → prints the approval URL
 //   3. Open it, approve; the browser lands on a localhost page that won't load.
 //   4. node --env-file=.env scripts/strava-spike.mjs <code>     → `code` from that URL
 
 const clientId = process.env.VITE_STRAVA_CLIENT_ID
-const clientSecret = process.env.VITE_STRAVA_CLIENT_SECRET
+const clientSecret = process.env.STRAVA_CLIENT_SECRET
 if (!clientId || !clientSecret) {
-  console.error('Missing VITE_STRAVA_CLIENT_ID / VITE_STRAVA_CLIENT_SECRET in .env')
+  console.error('Missing VITE_STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET in .env')
   process.exit(1)
 }
 

@@ -1,14 +1,53 @@
 import { Capacitor } from '@capacitor/core'
 import { CheckCircle2, ExternalLink, Loader2, RefreshCw, Upload } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { openLink, PRIVACY_URL } from '../../lib/links'
 import { useSettings } from '../../store/settings'
 import { useStrava } from '../../store/strava'
 
 const activityUrl = (id: number) => `https://www.strava.com/activities/${id}`
 
+// Shown before handing over to Strava: what's shared, and how to stop (API Agreement 2.1).
+function StravaConsent({ onContinue, onCancel }: { onContinue: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60" onClick={onCancel}>
+      <div
+        className="space-y-3 rounded-t-2xl bg-surface p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold">Connect Strava</h2>
+        <p className="text-sm text-fg-soft">When you save a workout (or tap Upload), the app sends it to your Strava account:</p>
+        <ul className="list-disc space-y-1 pl-5 text-sm text-fg-soft">
+          <li>name, start time and duration</li>
+          <li>exercises and sets (weight, reps or time)</li>
+          <li>heart rate readings and estimated calories</li>
+          <li>your notes and a written summary</li>
+        </ul>
+        <p className="text-sm text-fg-soft">
+          The app receives your Strava name and a sign-in token, stored only on this phone. Disconnect any time here or
+          in Strava&apos;s settings; the app then deletes its Strava sign-in. Activities already on Strava stay there
+          until you delete them in Strava.
+        </p>
+        <button onClick={() => openLink(PRIVACY_URL)} className="text-sm text-accent-ink underline">
+          Privacy Policy
+        </button>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button onClick={onCancel} className="rounded-lg bg-raised py-3 font-medium">
+            Cancel
+          </button>
+          <button onClick={onContinue} className="rounded-lg bg-accent py-3 font-semibold text-on-accent">
+            Continue to Strava
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Profile: connect / disconnect and the auto-upload switch.
 export function StravaConnection() {
   const { auth, connecting, error, connect, disconnect } = useStrava()
+  const [consent, setConsent] = useState(false)
   const { stravaAutoUpload, update } = useSettings()
   const native = Capacitor.isNativePlatform()
 
@@ -31,7 +70,7 @@ export function StravaConnection() {
         ) : (
           <button
             disabled={!native || connecting}
-            onClick={() => void connect()}
+            onClick={() => setConsent(true)}
             className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-50"
           >
             {connecting ? 'Waiting…' : 'Connect'}
@@ -39,6 +78,15 @@ export function StravaConnection() {
         )}
       </div>
       {!native && !auth && <p className="text-xs text-subtle">Connect from the phone app.</p>}
+      {consent && (
+        <StravaConsent
+          onCancel={() => setConsent(false)}
+          onContinue={() => {
+            setConsent(false)
+            void connect()
+          }}
+        />
+      )}
       {error && <p className="text-sm text-bad">{error}</p>}
       {auth && (
         <label className="flex items-center justify-between border-t border-line pt-3 text-sm">

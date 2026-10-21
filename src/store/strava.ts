@@ -11,6 +11,7 @@ import {
   isConfigured,
   pollUpload,
   REDIRECT_URI,
+  refreshAthleteIfStale,
   uploadWorkout,
   type StravaAuth,
 } from '../strava/client'
@@ -42,6 +43,10 @@ export const useStrava = create<StravaStore>((set, get) => {
 
     async load() {
       set({ auth: (await getAuth()) ?? null })
+      // Keep the cached athlete name within Strava's 7-day limit (offline is fine).
+      void refreshAthleteIfStale()
+        .then((auth) => set({ auth: auth ?? null }))
+        .catch(async () => set({ auth: (await getAuth()) ?? null }))
       // The OAuth redirect comes back into the app via the adamsgym:// link.
       void CapApp.addListener('appUrlOpen', ({ url }) => void get().handleRedirect(url))
       const launch = await CapApp.getLaunchUrl()
@@ -50,7 +55,7 @@ export const useStrava = create<StravaStore>((set, get) => {
 
     async connect() {
       if (!isConfigured()) {
-        set({ error: 'Strava client ID/secret missing from .env' })
+        set({ error: 'Strava client ID or token server URL missing from .env' })
         return
       }
       set({ connecting: true, error: null })
@@ -97,6 +102,8 @@ export const useStrava = create<StravaStore>((set, get) => {
         await uploadWorkout(workoutId, useSettings.getState().unit, track)
       } finally {
         inFlight.delete(workoutId)
+        // A 401 during the upload clears the tokens; reflect that in the UI.
+        set({ auth: (await getAuth()) ?? null })
       }
     },
   }
