@@ -54,7 +54,7 @@ export class BackupError extends Error {}
 function validate(data: unknown, currentVersion: number): Backup {
   const b = data as Partial<Backup> | null
   if (!b || b.app !== APP_ID || typeof b.tables !== 'object' || b.tables === null)
-    throw new BackupError("This file isn't a Simple Workout backup.")
+    throw new BackupError("This file isn't a backup from this app.")
   if (typeof b.schemaVersion !== 'number' || b.schemaVersion > currentVersion)
     throw new BackupError('This backup is from a newer version of the app. Update the app first.')
   for (const [name, t] of Object.entries(b.tables)) {

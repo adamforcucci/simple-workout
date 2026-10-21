@@ -52,7 +52,7 @@ export function buildStrengthUpload(w: Workout, hr: HrSample[]): StravaStrengthU
     start_time: new Date(w.startedAt).toISOString(),
     utc_offset: w.utcOffsetS,
     elapsed_time: Math.max(1, Math.round((endedAt - w.startedAt) / 1000)),
-    creator: { name: 'Simple Workout' },
+    creator: { name: 'Workout' },
     sets,
   }
   if (w.calories) upload.total_calories = w.calories

@@ -88,7 +88,7 @@ describe('backup', () => {
     const target = await freshDb()
     await startWorkout(target, { name: 'Keep', routineId: null, startedAt: 5, utcOffsetS: 0 })
     const good = await exportBackup(source)
-    await expect(importBackup(target, { hello: 'world' })).rejects.toThrow("isn't a Simple Workout backup")
+    await expect(importBackup(target, { hello: 'world' })).rejects.toThrow("isn't a backup from this app")
     await expect(importBackup(target, { ...good, schemaVersion: 99 })).rejects.toThrow('newer version')
     await expect(importBackup(target, { ...good, tables: { evil: { columns: ['x'], rows: [] } } })).rejects.toThrow('Unknown table')
     await expect(

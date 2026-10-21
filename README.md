@@ -1,4 +1,6 @@
-# Simple Workout
+# Workout
+
+Working name (the repo is `simple-workout`); a distinctive name is chosen before any public release.
 
 Personal Android gym tracker (Hevy-style logging), sideloaded in dev mode. Data stays on the phone; workouts sync to Strava with Strava's own exercise list and muscle map.
 

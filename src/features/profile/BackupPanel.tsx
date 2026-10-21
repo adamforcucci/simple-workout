@@ -25,7 +25,7 @@ async function saveFile(filename: string, json: string): Promise<boolean> {
   // Written to the app cache, then handed to the share sheet (Drive, Files, email…).
   const { uri } = await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 })
   try {
-    const { activityType } = await Share.share({ title: 'Simple Workout backup', files: [uri] })
+    const { activityType } = await Share.share({ title: 'Workout backup', files: [uri] })
     return !!activityType
   } catch {
     return false // share sheet dismissed
@@ -51,7 +51,7 @@ export function BackupPanel() {
       await useActiveWorkout.getState().flush()
       const db = await getDb()
       const backup = await exportBackup(db)
-      const shared = await saveFile(`simple-workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`, JSON.stringify(backup))
+      const shared = await saveFile(`workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`, JSON.stringify(backup))
       if (!shared) return
       // Only once an app actually received the file.
       const now = new Date().toISOString()
