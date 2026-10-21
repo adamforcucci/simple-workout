@@ -16,7 +16,7 @@ export default function Terms() {
 
       <h2>Test release</h2>
       <p>
-        Workout is currently a free, invitation-only test version. It may change, have bugs or stop being available.
+        Adam&apos;s Workout App is currently a free, invitation-only test version. It may change, have bugs or stop being available.
         Keep a backup (Profile → Backup) of anything you care about.
       </p>
 

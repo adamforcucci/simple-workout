@@ -1,6 +1,6 @@
-# Workout
+# Adam's Workout App
 
-Working name (the repo is `simple-workout`); a distinctive name is chosen before any public release.
+Shown as **Workout** under the launcher icon. No ads, no accounts, no tracking, no data sales: workouts stay on the phone. (The repo is `simple-workout`.)
 
 Personal Android gym tracker (Hevy-style logging), sideloaded in dev mode. Data stays on the phone; workouts sync to Strava with Strava's own exercise list and muscle map.
 

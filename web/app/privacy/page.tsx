@@ -17,7 +17,7 @@ export default function Privacy() {
 
       <h2>The short version</h2>
       <p>
-        Workout keeps your data on your phone. We don&apos;t run accounts, we don&apos;t have a copy of your workouts,
+        Adam&apos;s Workout App keeps your data on your phone. We don&apos;t run accounts, we don&apos;t have a copy of your workouts,
         and we don&apos;t sell or share your information. If you connect Strava, the app sends the workouts you choose to
         Strava, and nowhere else.
       </p>
@@ -87,7 +87,7 @@ export default function Privacy() {
       </p>
 
       <h2>Children</h2>
-      <p>Workout isn&apos;t intended for children under 16.</p>
+      <p>Adam&apos;s Workout App isn&apos;t intended for children under 16.</p>
 
       <h2>Changes</h2>
       <p>If this policy changes, the updated version will be posted here with a new date.</p>

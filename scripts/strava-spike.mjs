@@ -57,7 +57,7 @@ const workout = {
   elapsed_time: elapsed,
   active_time: elapsed,
   total_calories: 180,
-  creator: { name: 'Workout (spike)' },
+  creator: { name: "Adam's Workout App (spike)" },
   streams: { time, heartrate },
   sets: [
     { exercise_type: 'BARBELL_BENCH_PRESS', repetitions: 8, weight: 60, start_time: iso(60) },
