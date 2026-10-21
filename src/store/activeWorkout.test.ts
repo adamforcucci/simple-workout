@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { migrate } from '../db/migrations'
 import { getJson } from '../db/repos/kv'
-import { saveRoutine } from '../db/repos/routines'
+import { getRoutine, saveRoutine } from '../db/repos/routines'
 import { getWorkout, listWorkouts } from '../db/repos/workouts'
 import { seedExercises } from '../db/seed'
 import { sqlJsDb } from '../db/sqlJsDb'
@@ -10,7 +10,7 @@ import type { Db } from '../db/types'
 let db: Db
 vi.mock('../db/client', () => ({ getDb: () => Promise.resolve(db) }))
 
-const { suggestSet, useActiveWorkout } = await import('./activeWorkout')
+const { routineChanged, routineFromWorkout, suggestSet, useActiveWorkout } = await import('./activeWorkout')
 const store = () => useActiveWorkout.getState()
 const workout = () => store().workout!
 
@@ -32,8 +32,8 @@ async function startSuperset() {
     name: 'Upper',
     notes: '',
     items: [
-      { exerciseId: bench, supersetGroup: 1, targetSets: 2, targetReps: 8, restS: 90 },
-      { exerciseId: row, supersetGroup: 1, targetSets: 2, targetReps: 10, restS: 60 },
+      { exerciseId: bench, supersetGroup: 1, targetSets: 2, targetReps: 8, targetWeightKg: null, targetDurationS: null, restS: 90 },
+      { exerciseId: row, supersetGroup: 1, targetSets: 2, targetReps: 10, targetWeightKg: null, targetDurationS: null, restS: 60 },
     ],
   })
   await store().startFromRoutine(routineId)
@@ -58,7 +58,7 @@ describe('active workout store', () => {
     expect(workout().rest).toBeNull()
     expect(workout().exercises[0].sets[0]).toMatchObject({ weightKg: 60, reps: 8 })
 
-    expect(store().toggleSet(row.key, row.sets[0].key)).toBeNull()
+    expect(store().toggleSet(row.key, row.sets[0].key)).toBe(0) // back to the first exercise of the round
     const rest = workout().rest!
     expect(rest.endsAt - rest.startedAt).toBe(60_000)
   })
@@ -89,6 +89,7 @@ describe('active workout store', () => {
     await startSuperset()
     const [bench] = workout().exercises
     store().updateSet(bench.key, bench.sets[0].key, { weightKg: 70 })
+    store().toggleSet(bench.key, bench.sets[0].key) // a completed set makes it resumable
     await vi.waitFor(async () => {
       const draft = await getJson<{ exercises: { sets: { weightKg: number | null }[] }[] }>(db, 'activeWorkout')
       expect(draft?.exercises[0].sets[0].weightKg).toBe(70)
@@ -170,6 +171,91 @@ describe('active workout store', () => {
     expect(workout().workoutId).not.toBe(id)
     expect(workout().exercises.map((e) => [e.name, e.sets.length])).toEqual([['Barbell Bench Press', 1]])
     expect(workout().exercises[0].previous[0].weightKg).toBe(60)
+  })
+
+  test('routine targets fill a first session', async () => {
+    const bench = await idOf('BARBELL_BENCH_PRESS')
+    const plank = await idOf('PLANK_GENERIC')
+    const routineId = await saveRoutine(db, {
+      name: 'R',
+      notes: '',
+      items: [
+        { exerciseId: bench, supersetGroup: null, targetSets: 2, targetReps: 5, targetWeightKg: 80, targetDurationS: null, restS: 0 },
+        { exerciseId: plank, supersetGroup: null, targetSets: 1, targetReps: null, targetWeightKg: null, targetDurationS: 45, restS: 0 },
+      ],
+    })
+    await store().startFromRoutine(routineId)
+    const [b, p] = workout().exercises
+    expect(suggestSet(b, 1)).toEqual({ weightKg: 80, reps: 5, durationS: null })
+    expect(suggestSet(p, 0)).toEqual({ weightKg: null, reps: null, durationS: 45 })
+    expect(b.restS).toBe(0)
+  })
+
+  test('finishing can save changes back to the routine', async () => {
+    const { routineId } = await startSuperset()
+    const [bench, row] = workout().exercises
+    store().updateSet(bench.key, bench.sets[0].key, { weightKg: 65, reps: 6 })
+    store().toggleSet(bench.key, bench.sets[0].key)
+    store().removeSet(row.key, row.sets[1].key) // swipe-deleted a set
+    const routine = (await getRoutine(db, routineId))!
+    const updated = routineFromWorkout(workout(), routine)
+    expect(routineChanged(routine, updated)).toBe(true)
+    expect(updated.items.map((i) => [i.targetSets, i.targetReps, i.targetWeightKg, i.supersetGroup])).toEqual([
+      [2, 6, 65, 1],
+      [1, 10, null, 1],
+    ])
+
+    await store().finish({ name: 'Upper', notes: '', calories: null, avgHr: null, maxHr: null, endedAt: Date.now(), updateRoutine: true })
+    expect((await getRoutine(db, routineId))!.items.map((i) => i.targetSets)).toEqual([2, 1])
+  })
+
+  test('an unchanged session reports no routine change', async () => {
+    const { routineId } = await startSuperset()
+    expect(routineChanged((await getRoutine(db, routineId))!, routineFromWorkout(workout(), (await getRoutine(db, routineId))!))).toBe(false)
+  })
+
+  test('swap keeps position, superset and set count', async () => {
+    await startSuperset()
+    const [bench] = workout().exercises
+    await store().swapExercise(bench.key, await idOf('DUMBBELL_BENCH_PRESS'))
+    const [first, second] = workout().exercises
+    expect([first.name, first.supersetGroup, first.sets.length, first.restS]).toEqual(['Dumbbell Bench Press', 1, 2, 90])
+    expect(second.name).toBe('Dumbbell Row')
+  })
+
+  test('best set comes from history', async () => {
+    const { routineId } = await startSuperset()
+    const [bench] = workout().exercises
+    store().updateSet(bench.key, bench.sets[0].key, { weightKg: 60, reps: 8 })
+    store().toggleSet(bench.key, bench.sets[0].key)
+    store().updateSet(bench.key, bench.sets[1].key, { weightKg: 70, reps: 3 })
+    store().toggleSet(bench.key, bench.sets[1].key)
+    await store().finish({ name: 'U', notes: '', calories: null, avgHr: null, maxHr: null, endedAt: Date.now() })
+    await new Promise((r) => setTimeout(r, 5))
+    await store().startFromRoutine(routineId)
+    expect(workout().exercises[0].best).toMatchObject({ weightKg: 70, reps: 3 }) // e1RM 77 kg beats 60×8 (76 kg)
+  })
+
+  test('leaving before completing a set discards the workout', async () => {
+    await startSuperset()
+    expect(await store().discardIfEmpty()).toBe(true)
+    expect(store().workout).toBeNull()
+    expect((await db.get<{ n: number }>('SELECT COUNT(*) AS n FROM workouts'))!.n).toBe(0)
+
+    await startSuperset()
+    const [bench] = workout().exercises
+    store().updateSet(bench.key, bench.sets[0].key, { weightKg: 60 })
+    store().toggleSet(bench.key, bench.sets[0].key)
+    expect(await store().discardIfEmpty()).toBe(false)
+    expect(store().workout).not.toBeNull()
+  })
+
+  test('an empty workout is not resumed after a restart', async () => {
+    await startSuperset()
+    await store().flush()
+    useActiveWorkout.setState({ workout: null, hydrated: false })
+    await store().hydrate()
+    expect(store().workout).toBeNull()
   })
 
   test('discard removes the workout', async () => {

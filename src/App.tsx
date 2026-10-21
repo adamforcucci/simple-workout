@@ -1,6 +1,6 @@
 import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { ExerciseDetail } from './features/exercises/ExerciseDetail'
 import { HeartRateSettings } from './features/heartRate/HeartRateSettings'
@@ -47,10 +47,25 @@ function useAndroidBackButton() {
   }, [navigate, location.pathname])
 }
 
+const IN_WORKOUT = /^\/workout(\/|$)/
+
+// Leaving the workout screens before completing a set throws the workout away,
+// so "Resume" only ever appears for a workout that has actually started.
+function useDiscardEmptyWorkoutOnLeave() {
+  const { pathname } = useLocation()
+  const previous = useRef(pathname)
+  useEffect(() => {
+    const left = IN_WORKOUT.test(previous.current) && !IN_WORKOUT.test(pathname)
+    previous.current = pathname
+    if (left) void useActiveWorkout.getState().discardIfEmpty()
+  }, [pathname])
+}
+
 function Shell() {
   const location = useLocation()
   const fullScreen = FULL_SCREEN.test(location.pathname)
   useAndroidBackButton()
+  useDiscardEmptyWorkoutOnLeave()
 
   return (
     <div className="flex h-full flex-col pt-[env(safe-area-inset-top)]">

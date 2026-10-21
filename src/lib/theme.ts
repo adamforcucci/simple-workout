@@ -1,5 +1,4 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
-import { StatusBar, Style } from '@capacitor/status-bar'
 
 export type ThemePref = 'system' | 'light' | 'dark'
 
@@ -9,7 +8,11 @@ const STORAGE_KEY = 'theme'
 const APP_BG = { light: '#f4f4f5', dark: '#09090b' } as const
 
 // Native side paints the launch window/WebView in this theme (see ThemePlugin.java).
-const NativeTheme = registerPlugin<{ setPreference(o: { pref: ThemePref }): Promise<void> }>('Theme')
+const NativeTheme = registerPlugin<{
+  setPreference(o: { pref: ThemePref }): Promise<void>
+  // Status/navigation bar icon colours (and bar colours on older Android).
+  setSystemBars(o: { dark: boolean }): Promise<void>
+}>('Theme')
 
 const systemDark = () => window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -19,9 +22,7 @@ function apply(resolved: 'light' | 'dark') {
   document.documentElement.dataset.theme = resolved
   document.documentElement.style.background = APP_BG[resolved]
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', APP_BG[resolved])
-  // Style.Dark = light status-bar icons, for dark backgrounds.
-  if (Capacitor.isNativePlatform())
-    void StatusBar.setStyle({ style: resolved === 'dark' ? Style.Dark : Style.Light }).catch(() => {})
+  if (Capacitor.isNativePlatform()) void NativeTheme.setSystemBars({ dark: resolved === 'dark' }).catch(() => {})
 }
 
 export function applyTheme(pref: ThemePref) {

@@ -65,6 +65,7 @@ export function ActiveWorkout() {
             exercise={e}
             isFirst={i === 0}
             isLast={i === workout.exercises.length - 1}
+            linkedToNext={e.supersetGroup !== null && workout.exercises[i + 1]?.supersetGroup === e.supersetGroup}
             onFocusExercise={focusExercise}
           />
         ))}

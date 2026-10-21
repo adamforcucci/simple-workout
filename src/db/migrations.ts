@@ -118,6 +118,16 @@ export const MIGRATIONS: string[] = [
     value TEXT NOT NULL
   );
   `,
+  // 2: routine items carry a starting weight/time; rest defaults to off.
+  `
+  ALTER TABLE routine_items ADD COLUMN target_weight_kg REAL;
+  ALTER TABLE routine_items ADD COLUMN target_duration_s INTEGER;
+  UPDATE exercises SET default_rest_s = 0 WHERE is_custom = 0;
+  `,
+  // 3: clear a "last backup" time recorded by a cancelled export (since fixed).
+  `
+  DELETE FROM kv WHERE key = 'lastBackupAt';
+  `,
 ]
 
 export async function migrate(db: Db): Promise<void> {

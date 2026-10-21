@@ -12,18 +12,24 @@ import { useActiveWorkout } from '../../store/activeWorkout'
 
 const LAST_BACKUP_KEY = 'lastBackupAt'
 
-async function saveFile(filename: string, json: string) {
+// Resolves true only if the file was handed to another app (or downloaded).
+async function saveFile(filename: string, json: string): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
     a.download = filename
     a.click()
     URL.revokeObjectURL(a.href)
-    return
+    return true
   }
   // Written to the app cache, then handed to the share sheet (Drive, Files, email…).
   const { uri } = await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 })
-  await Share.share({ title: 'Simple Workout backup', files: [uri] })
+  try {
+    const { activityType } = await Share.share({ title: 'Simple Workout backup', files: [uri] })
+    return !!activityType
+  } catch {
+    return false // share sheet dismissed
+  }
 }
 
 export function BackupPanel() {
@@ -45,8 +51,9 @@ export function BackupPanel() {
       await useActiveWorkout.getState().flush()
       const db = await getDb()
       const backup = await exportBackup(db)
-      await saveFile(`simple-workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`, JSON.stringify(backup))
-      // Only once the share sheet completes (it rejects if dismissed).
+      const shared = await saveFile(`simple-workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`, JSON.stringify(backup))
+      if (!shared) return
+      // Only once an app actually received the file.
       const now = new Date().toISOString()
       await setJson(db, LAST_BACKUP_KEY, now)
       setLastBackup(now)

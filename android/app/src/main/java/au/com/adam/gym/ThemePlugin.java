@@ -3,7 +3,11 @@ package au.com.adam.gym;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.app.Activity;
 import android.os.Build;
+import android.view.Window;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -35,12 +39,37 @@ public class ThemePlugin extends Plugin {
         call.resolve();
     }
 
-    /** Background colour for the saved preference ("system" follows the phone). */
-    static int launchBackground(Context ctx) {
+    /** Status- and navigation-bar icon colours for the theme the page resolved. */
+    @PluginMethod
+    public void setSystemBars(PluginCall call) {
+        boolean dark = Boolean.TRUE.equals(call.getBoolean("dark", false));
+        Activity activity = getActivity();
+        if (activity != null) activity.runOnUiThread(() -> applySystemBars(activity, dark));
+        call.resolve();
+    }
+
+    /** Whether the saved preference resolves to dark ("system" follows the phone). */
+    static boolean savedIsDark(Context ctx) {
         String pref = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "system");
-        boolean dark = "dark".equals(pref)
+        return "dark".equals(pref)
             || ("system".equals(pref)
                 && (ctx.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
-        return dark ? DARK_BG : LIGHT_BG;
+    }
+
+    /**
+     * Dark icons on light backgrounds and vice versa, for both the status bar
+     * and the navigation bar (3-button bar or gesture pill). On pre-edge-to-edge
+     * Android the bars also get the app's background colour.
+     */
+    @SuppressWarnings("deprecation")
+    static void applySystemBars(Activity activity, boolean dark) {
+        Window window = activity.getWindow();
+        WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(window, window.getDecorView());
+        bars.setAppearanceLightStatusBars(!dark);
+        bars.setAppearanceLightNavigationBars(!dark);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.setNavigationBarColor(dark ? DARK_BG : LIGHT_BG);
+            window.setStatusBarColor(dark ? DARK_BG : LIGHT_BG);
+        }
     }
 }

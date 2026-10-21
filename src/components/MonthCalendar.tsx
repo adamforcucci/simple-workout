@@ -71,7 +71,7 @@ export function MonthCalendar({ month, counts, selected, onSelect, onMonthChange
                     : count
                       ? isSelected
                         ? 'bg-fg font-semibold text-app'
-                        : 'bg-accent font-semibold text-black'
+                        : 'bg-accent font-semibold text-on-accent'
                       : 'text-fg-soft'
                 } ${isToday(d) && !count ? 'ring-1 ring-subtle' : ''}`}
               >

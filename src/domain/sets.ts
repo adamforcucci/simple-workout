@@ -33,3 +33,15 @@ export function heaviestSet(sets: LoggedSet[]): LoggedSet | undefined {
     .filter((s) => isWorkingSet(s) && s.weightKg !== null && (s.reps ?? 0) > 0)
     .sort((a, b) => b.weightKg! - a.weightKg! || b.reps! - a.reps!)[0]
 }
+
+// The single best working set, judged the way the exercise is logged:
+// longest hold for timed work, most reps for unloaded work, else best
+// estimated 1RM (falling back to the heaviest set for high-rep work).
+export function bestSet(sets: LoggedSet[], tracking: 'weight_reps' | 'reps' | 'duration'): LoggedSet | null {
+  const working = sets.filter(isWorkingSet)
+  const maxBy = (score: (s: LoggedSet) => number) =>
+    working.reduce<LoggedSet | null>((best, s) => (score(s) > (best ? score(best) : 0) ? s : best), null)
+  if (tracking === 'duration') return maxBy((s) => s.durationS ?? 0)
+  if (tracking === 'reps' && working.every((s) => !s.weightKg)) return maxBy((s) => s.reps ?? 0)
+  return maxBy((s) => (s.weightKg && s.reps ? (estimatedOneRepMax(s.weightKg, s.reps) ?? 0) : 0)) ?? heaviestSet(working) ?? null
+}

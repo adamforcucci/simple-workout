@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#F97316</color>
+    <color name="ic_launcher_background">#0E7490</color>
     <!-- Launch screen; dark variant in values-night (follows the phone's mode). -->
     <color name="app_background">#F4F4F5</color>
 </resources>

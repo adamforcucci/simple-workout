@@ -32,7 +32,7 @@ export function StravaConnection() {
           <button
             disabled={!native || connecting}
             onClick={() => void connect()}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-50"
           >
             {connecting ? 'Waiting…' : 'Connect'}
           </button>
@@ -99,7 +99,7 @@ export function StravaWorkoutStatus({ workoutId }: { workoutId: number }) {
       {auth && !busy && sync?.status !== 'done' && (
         <button
           onClick={() => void upload(workoutId)}
-          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-black"
+          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-on-accent"
         >
           {sync?.status === 'error' ? <RefreshCw size={14} /> : <Upload size={14} />}
           {sync?.status === 'error' ? 'Retry' : 'Upload'}

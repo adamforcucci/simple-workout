@@ -10,6 +10,9 @@ interface Props {
   onClose: () => void
   onSelect: (ids: number[], asSuperset: boolean) => void
   allowSuperset?: boolean
+  // Pick exactly one (e.g. swapping an exercise): tapping a row chooses it.
+  single?: boolean
+  title?: string
 }
 
 function Chips<T extends string>({
@@ -27,7 +30,7 @@ function Chips<T extends string>({
         <button
           key={o}
           onClick={() => onChange(value === o ? undefined : o)}
-          className={`shrink-0 rounded-full px-3 py-1 text-sm ${value === o ? 'bg-accent text-black' : 'bg-raised text-fg-soft'}`}
+          className={`shrink-0 rounded-full px-3 py-1 text-sm ${value === o ? 'bg-accent text-on-accent' : 'bg-raised text-fg-soft'}`}
         >
           {label(o)}
         </button>
@@ -36,7 +39,7 @@ function Chips<T extends string>({
   )
 }
 
-export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true }: Props) {
+export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true, single = false, title }: Props) {
   const [query, setQuery] = useState('')
   const [muscle, setMuscle] = useState<Muscle>()
   const [equipment, setEquipment] = useState<Equipment>()
@@ -67,7 +70,14 @@ export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true }
     onSelect(selected, asSuperset)
     close()
   }
-  const toggle = (id: number) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+  const toggle = (id: number) => {
+    if (single) {
+      onSelect([id], false)
+      close()
+      return
+    }
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-app pt-[env(safe-area-inset-top)]">
@@ -81,7 +91,7 @@ export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true }
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search exercises"
+            placeholder={title ?? 'Search exercises'}
             className="flex-1 bg-transparent outline-none placeholder:text-subtle"
           />
         </div>
@@ -105,7 +115,7 @@ export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true }
                   </p>
                 </div>
                 {order >= 0 && (
-                  <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-black">
+                  <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-on-accent">
                     {selected.length > 1 ? order + 1 : <Check size={14} />}
                   </span>
                 )}
@@ -123,7 +133,7 @@ export function ExercisePicker({ open, onClose, onSelect, allowSuperset = true }
               Add as superset
             </button>
           )}
-          <button onClick={() => done(false)} className="flex-1 rounded-lg bg-accent py-3 font-medium text-black">
+          <button onClick={() => done(false)} className="flex-1 rounded-lg bg-accent py-3 font-medium text-on-accent">
             Add {selected.length}
           </button>
         </div>

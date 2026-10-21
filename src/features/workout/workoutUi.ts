@@ -3,6 +3,9 @@ import type { Tracking } from '../../domain/exerciseCatalog'
 import { toDisplayWeight, type WeightUnit } from '../../domain/units'
 import { formatClock } from '../../lib/format'
 
+// What the reference column of a set row shows.
+export type ReferenceMode = 'previous' | 'best'
+
 export const SUPERSET_COLORS = ['border-sky-500', 'border-fuchsia-500', 'border-lime-500', 'border-amber-500']
 export const REST_PRESETS = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300]
 

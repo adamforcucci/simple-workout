@@ -28,7 +28,7 @@ beforeEach(async () => {
   await saveRoutine(source, {
     name: 'Push',
     notes: '',
-    items: [{ exerciseId: bench, supersetGroup: null, targetSets: 3, targetReps: 8, restS: 120 }],
+    items: [{ exerciseId: bench, supersetGroup: null, targetSets: 3, targetReps: 8, targetWeightKg: null, targetDurationS: null, restS: 120 }],
   })
   workoutId = await startWorkout(source, { name: 'Push', routineId: null, startedAt: 1_000_000, utcOffsetS: 39600 })
   await finishWorkout(source, workoutId, {

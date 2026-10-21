@@ -85,8 +85,8 @@ describe('routines', () => {
       name: 'Push/Pull',
       notes: '',
       items: [
-        { exerciseId: bench, supersetGroup: 1, targetSets: 3, targetReps: 8, restS: 90 },
-        { exerciseId: row, supersetGroup: 1, targetSets: 3, targetReps: 10, restS: 90 },
+        { exerciseId: bench, supersetGroup: 1, targetSets: 3, targetReps: 8, targetWeightKg: null, targetDurationS: null, restS: 90 },
+        { exerciseId: row, supersetGroup: 1, targetSets: 3, targetReps: 10, targetWeightKg: null, targetDurationS: null, restS: 90 },
       ],
     })
     await saveRoutine(db, { ...(await getRoutine(db, id))!, name: 'Upper' })

@@ -113,7 +113,7 @@ export function HeartRateSettings() {
           <button
             onClick={() => void startScan()}
             disabled={scanning}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-semibold text-black disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-semibold text-on-accent disabled:opacity-60"
           >
             {scanning ? <Loader2 size={18} className="animate-spin" /> : <Bluetooth size={18} />}
             {scanning ? 'Scanning…' : device ? 'Pair a different device' : 'Find heart rate monitor'}

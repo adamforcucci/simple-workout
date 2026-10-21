@@ -128,7 +128,7 @@ function BodyWeight({ unit }: { unit: WeightUnit }) {
               void logWeight(date, fromDisplayWeight(value, unit))
               setValue(null)
             }}
-            className="rounded-md bg-accent px-4 font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-accent px-4 font-semibold text-on-accent disabled:opacity-40"
           >
             Log
           </button>

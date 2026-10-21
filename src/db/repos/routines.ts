@@ -5,6 +5,8 @@ export interface RoutineItem {
   supersetGroup: number | null
   targetSets: number
   targetReps: number | null
+  targetWeightKg: number | null
+  targetDurationS: number | null
   restS: number | null
 }
 
@@ -27,6 +29,8 @@ interface RoutineItemRow {
   superset_group: number | null
   target_sets: number
   target_reps: number | null
+  target_weight_kg: number | null
+  target_duration_s: number | null
   rest_s: number | null
 }
 
@@ -55,6 +59,8 @@ export async function getRoutine(db: Db, id: number): Promise<Routine | undefine
       supersetGroup: i.superset_group,
       targetSets: i.target_sets,
       targetReps: i.target_reps,
+      targetWeightKg: i.target_weight_kg,
+      targetDurationS: i.target_duration_s,
       restS: i.rest_s,
     })),
   }
@@ -80,9 +86,20 @@ export async function saveRoutine(db: Db, r: Omit<Routine, 'id'> & { id?: number
     }
     for (const [position, i] of r.items.entries()) {
       await db.run(
-        `INSERT INTO routine_items (routine_id, exercise_id, position, superset_group, target_sets, target_reps, rest_s)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [id, i.exerciseId, position, i.supersetGroup, i.targetSets, i.targetReps, i.restS],
+        `INSERT INTO routine_items
+           (routine_id, exercise_id, position, superset_group, target_sets, target_reps, target_weight_kg, target_duration_s, rest_s)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          i.exerciseId,
+          position,
+          i.supersetGroup,
+          i.targetSets,
+          i.targetReps,
+          i.targetWeightKg,
+          i.targetDurationS,
+          i.restS,
+        ],
       )
     }
     return id

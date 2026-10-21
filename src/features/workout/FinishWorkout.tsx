@@ -5,13 +5,14 @@ import { Navigate, useNavigate } from 'react-router'
 import { getDb } from '../../db/client'
 import { getHrSamples, type HrSample } from '../../db/repos/hr'
 import { bodyWeightOn } from '../../db/repos/profile'
+import { getRoutine } from '../../db/repos/routines'
 import { exerciseHistory } from '../../db/repos/workouts'
 import { estimateCalories } from '../../domain/calories'
 import { findPrs, type PersonalRecord } from '../../domain/prs'
 import { totalVolume } from '../../domain/sets'
 import { formatVolume, formatWeight } from '../../domain/units'
 import { formatDuration } from '../../lib/format'
-import { useActiveWorkout } from '../../store/activeWorkout'
+import { routineChanged, routineFromWorkout, useActiveWorkout } from '../../store/activeWorkout'
 import { useProfile } from '../../store/profile'
 import { useSettings } from '../../store/settings'
 import { useStrava } from '../../store/strava'
@@ -39,6 +40,9 @@ export function FinishWorkout() {
   const [prs, setPrs] = useState<{ name: string; pr: PersonalRecord }[]>([])
   const [hr, setHr] = useState<HrSample[]>([])
   const profile = useProfile((s) => s.profile)
+  // Offered when the session was started from a routine and differs from it.
+  const [routineUpdate, setRoutineUpdate] = useState<{ name: string; changed: boolean } | null>(null)
+  const [updateRoutine, setUpdateRoutine] = useState(false)
   const [endedAt] = useState(() => workout?.editing?.endedAt ?? Date.now())
 
   useEffect(() => {
@@ -49,6 +53,8 @@ export function FinishWorkout() {
       const db = await getDb()
       const weight = await bodyWeightOn(db, format(workout.startedAt, 'yyyy-MM-dd'))
       const samples = await getHrSamples(db, workout.workoutId)
+      const routine = workout.routineId !== null && !workout.editing ? await getRoutine(db, workout.routineId) : undefined
+      const changed = routine ? routineChanged(routine, routineFromWorkout(workout, routine)) : false
       const found: { name: string; pr: PersonalRecord }[] = []
       for (const e of workout.exercises) {
         const done = e.sets.filter((s) => s.completedAt !== null)
@@ -60,6 +66,8 @@ export function FinishWorkout() {
       if (!cancelled) {
         setBodyWeight(weight)
         setHr(samples)
+        setRoutineUpdate(routine ? { name: routine.name, changed } : null)
+        setUpdateRoutine(changed)
         setPrs(found)
       }
     })()
@@ -95,6 +103,7 @@ export function FinishWorkout() {
         avgHr: avgHr ?? workout.editing?.avgHr ?? null,
         maxHr: maxHr ?? workout.editing?.maxHr ?? null,
         endedAt,
+        updateRoutine,
       })
       // Fire and forget: the workout page shows progress.
       if (!workout.editing && useSettings.getState().stravaAutoUpload && useStrava.getState().auth)
@@ -154,6 +163,23 @@ export function FinishWorkout() {
               ))}
             </ul>
           </div>
+        )}
+
+        {routineUpdate?.changed && (
+          <label className="flex items-start gap-3 rounded-lg bg-surface p-3">
+            <input
+              type="checkbox"
+              checked={updateRoutine}
+              onChange={(e) => setUpdateRoutine(e.target.checked)}
+              className="mt-0.5 size-5 accent-[var(--color-accent)]"
+            />
+            <span>
+              <span className="block font-medium">Update “{routineUpdate.name}”</span>
+              <span className="text-sm text-muted">
+                Save today's exercises, sets, weights, reps and rest as the routine for next time.
+              </span>
+            </span>
+          </label>
         )}
 
         {incomplete > 0 && done.length > 0 && (

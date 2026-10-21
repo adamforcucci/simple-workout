@@ -2,9 +2,10 @@ import { create } from 'zustand'
 import { getDb } from '../db/client'
 import { getExercises, type Exercise } from '../db/repos/exercises'
 import { deleteKey, getJson, setJson } from '../db/repos/kv'
-import { getRoutine } from '../db/repos/routines'
+import { getRoutine, saveRoutine, type Routine, type RoutineItem } from '../db/repos/routines'
 import {
   deleteWorkout,
+  exerciseHistory,
   finishWorkout,
   getInProgressWorkout,
   getWorkout,
@@ -15,6 +16,7 @@ import {
   type SetType,
 } from '../db/repos/workouts'
 import type { Tracking } from '../domain/exerciseCatalog'
+import { bestSet, isWorkingSet } from '../domain/sets'
 import { afterSetCompleted, linkWithNext, moveItem, normalizeSupersets, unlink } from '../domain/superset'
 
 export interface DraftSet extends LoggedSet {
@@ -30,7 +32,12 @@ export interface DraftExercise {
   restS: number
   notes: string
   targetReps: number | null
+  // Routine defaults for a first session (optional on drafts saved before they existed).
+  targetWeightKg?: number | null
+  targetDurationS?: number | null
   previous: LoggedSet[]
+  // Best-ever working set, for the Previous ⇄ Best column.
+  best?: LoggedSet | null
   sets: DraftSet[]
 }
 
@@ -58,6 +65,8 @@ export interface FinishOptions {
   avgHr: number | null
   maxHr: number | null
   endedAt: number
+  // Save this session's exercises, set counts and values back to its routine.
+  updateRoutine?: boolean
 }
 
 const DRAFT_KEY = 'activeWorkout'
@@ -81,12 +90,19 @@ function defaultName(at: Date): string {
   return `${part} Workout`
 }
 
-async function draftExercise(
-  e: Exercise,
-  startedAt: number,
-  opts: { sets?: number; targetReps?: number | null; restS?: number | null; supersetGroup?: number | null } = {},
-): Promise<DraftExercise> {
-  const previous = await previousSets(await getDb(), e.id, startedAt)
+interface DraftOpts {
+  sets?: number
+  targetReps?: number | null
+  targetWeightKg?: number | null
+  targetDurationS?: number | null
+  restS?: number | null
+  supersetGroup?: number | null
+}
+
+async function draftExercise(e: Exercise, startedAt: number, opts: DraftOpts = {}): Promise<DraftExercise> {
+  const db = await getDb()
+  const previous = await previousSets(db, e.id, startedAt)
+  const history = (await exerciseHistory(db, e.id)).filter((h) => h.startedAt < startedAt)
   const count = opts.sets ?? Math.max(1, previous.length)
   return {
     key: newKey(),
@@ -97,7 +113,13 @@ async function draftExercise(
     restS: opts.restS ?? e.defaultRestS,
     notes: '',
     targetReps: opts.targetReps ?? null,
+    targetWeightKg: opts.targetWeightKg ?? null,
+    targetDurationS: opts.targetDurationS ?? null,
     previous,
+    best: bestSet(
+      history.flatMap((h) => h.sets),
+      e.tracking,
+    ),
     sets: Array.from({ length: count }, (_, i) => emptySet(previous[i]?.type === 'warmup' ? 'warmup' : 'normal')),
   }
 }
@@ -110,18 +132,46 @@ export interface SetSuggestion {
 
 // What a blank set will be logged as if ticked: the same set last session,
 // else whatever the set above holds (typed or suggested), else the routine's
-// target reps.
+// targets.
 export function suggestSet(ex: DraftExercise, index: number): SetSuggestion {
   const prev = ex.previous[index]
   const above = index > 0 ? ex.sets[index - 1] : undefined
   const aboveHint = above ? suggestSet(ex, index - 1) : undefined
   const fromAbove = (k: keyof SetSuggestion) => above?.[k] ?? aboveHint?.[k] ?? null
-  if (ex.tracking === 'duration') return { weightKg: null, reps: null, durationS: prev?.durationS ?? fromAbove('durationS') }
+  if (ex.tracking === 'duration')
+    return { weightKg: null, reps: null, durationS: prev?.durationS ?? fromAbove('durationS') ?? ex.targetDurationS ?? null }
   return {
-    weightKg: prev?.weightKg ?? fromAbove('weightKg'),
+    weightKg: prev?.weightKg ?? fromAbove('weightKg') ?? ex.targetWeightKg ?? null,
     reps: prev?.reps ?? fromAbove('reps') ?? ex.targetReps,
     durationS: null,
   }
+}
+
+const hasCompletedSet = (w: ActiveWorkout) => w.exercises.some((e) => e.sets.some((s) => s.completedAt !== null))
+
+// The routine as this session left it: exercise order, supersets, rest, the
+// remaining set count, and the last completed working set's values as targets.
+// Exercises whose sets were all removed drop out.
+export function routineFromWorkout(w: ActiveWorkout, routine: Routine): Routine {
+  const items: RoutineItem[] = []
+  for (const e of w.exercises) {
+    if (e.sets.length === 0) continue
+    const ref = e.sets.filter((s) => s.completedAt !== null && isWorkingSet(s)).at(-1)
+    items.push({
+      exerciseId: e.exerciseId,
+      supersetGroup: e.supersetGroup,
+      targetSets: e.sets.length,
+      targetReps: e.tracking === 'duration' ? null : (ref?.reps ?? e.targetReps),
+      targetWeightKg: e.tracking === 'duration' ? null : (ref?.weightKg ?? e.targetWeightKg ?? null),
+      targetDurationS: e.tracking === 'duration' ? (ref?.durationS ?? e.targetDurationS ?? null) : null,
+      restS: e.restS,
+    })
+  }
+  return { ...routine, items: normalizeSupersets(items) }
+}
+
+export function routineChanged(before: Routine, after: Routine): boolean {
+  return JSON.stringify(before.items) !== JSON.stringify(after.items)
 }
 
 // Fills blanks from the suggestion. Returns null if there's still nothing to log.
@@ -149,6 +199,10 @@ interface ActiveWorkoutStore {
   rename: (name: string) => void
   addExercises: (ids: number[], asSuperset: boolean) => Promise<void>
   removeExercise: (exKey: string) => void
+  // Replaces an exercise in place (same position, superset and set count).
+  swapExercise: (exKey: string, exerciseId: number) => Promise<void>
+  // Leaving a workout before completing any set throws it away.
+  discardIfEmpty: () => Promise<boolean>
   moveExercise: (exKey: string, delta: -1 | 1) => void
   linkWithNext: (exKey: string) => void
   unlink: (exKey: string) => void
@@ -223,11 +277,13 @@ export const useActiveWorkout = create<ActiveWorkoutStore>((set, get) => {
         set({ workout: draft?.editing ? draft : null, hydrated: true })
         return
       }
-      const workout =
+      const workout: ActiveWorkout =
         draft?.workoutId === row.id
           ? draft
           : { workoutId: row.id, name: row.name, routineId: row.routineId, startedAt: row.startedAt, exercises: [], rest: null }
       set({ workout, hydrated: true })
+      // Only a workout with at least one completed set is worth resuming.
+      if (!hasCompletedSet(workout)) await get().discard()
     },
 
     startEmpty: () => begin(defaultName(new Date()), null, async () => []),
@@ -249,6 +305,8 @@ export const useActiveWorkout = create<ActiveWorkoutStore>((set, get) => {
             await draftExercise(e, startedAt, {
               sets: item.targetSets,
               targetReps: item.targetReps,
+              targetWeightKg: item.targetWeightKg,
+              targetDurationS: item.targetDurationS,
               restS: item.restS,
               supersetGroup: item.supersetGroup,
             }),
@@ -344,10 +402,32 @@ export const useActiveWorkout = create<ActiveWorkoutStore>((set, get) => {
         if (i >= 0) w.exercises = normalizeSupersets(unlink(w.exercises, i).filter((e) => e.key !== exKey))
       }),
 
-    moveExercise: (exKey, delta) =>
+    async swapExercise(exKey, exerciseId) {
+      const w = get().workout
+      const old = w?.exercises.find((e) => e.key === exKey)
+      const e = old && (await getExercises(await getDb(), [exerciseId])).get(exerciseId)
+      if (!w || !old || !e) return
+      const draft = await draftExercise(e, w.startedAt, {
+        sets: old.sets.length,
+        restS: old.restS,
+        supersetGroup: old.supersetGroup,
+      })
       mutate((w) => {
         const i = exIndex(w, exKey)
-        w.exercises = moveItem(w.exercises, i, i + delta)
+        if (i >= 0) w.exercises[i] = draft
+      })
+    },
+
+    async discardIfEmpty() {
+      const w = get().workout
+      if (!w || w.editing || hasCompletedSet(w)) return false
+      await get().discard()
+      return true
+    },
+
+    moveExercise: (exKey, delta) =>
+      mutate((w) => {
+        w.exercises = moveItem(w.exercises, exIndex(w, exKey), delta)
       }),
 
     linkWithNext: (exKey) => mutate((w) => void (w.exercises = linkWithNext(w.exercises, exIndex(w, exKey)))),
@@ -412,7 +492,7 @@ export const useActiveWorkout = create<ActiveWorkoutStore>((set, get) => {
         w.exercises[i].sets[si] = { ...resolved, completedAt: now }
         if (!w.editing && after.kind === 'rest' && after.restS > 0) w.rest = { startedAt: now, endsAt: now + after.restS * 1000 }
       })
-      return after.kind === 'next' ? after.index : null
+      return after.kind === 'next' ? after.index : after.focus
     },
 
     adjustRest: (deltaS) =>
@@ -443,6 +523,10 @@ export const useActiveWorkout = create<ActiveWorkoutStore>((set, get) => {
         }))
         .filter((e) => e.sets.length > 0)
       const db = await getDb()
+      if (opts.updateRoutine && w.routineId !== null && !w.editing) {
+        const routine = await getRoutine(db, w.routineId)
+        if (routine) await saveRoutine(db, routineFromWorkout(w, routine))
+      }
       await finishWorkout(db, w.workoutId, {
         name: opts.name.trim() || w.name,
         notes: opts.notes,

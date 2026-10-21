@@ -111,7 +111,9 @@ export function WorkoutDetail() {
             exerciseId: e.exerciseId,
             supersetGroup: e.supersetGroup,
             targetSets: Math.max(1, e.sets.filter(isWorkingSet).length),
-            targetReps: e.sets.find(isWorkingSet)?.reps ?? null,
+            targetReps: e.sets.findLast(isWorkingSet)?.reps ?? null,
+            targetWeightKg: e.sets.findLast(isWorkingSet)?.weightKg ?? null,
+            targetDurationS: e.sets.findLast(isWorkingSet)?.durationS ?? null,
             restS: e.restS,
           })),
         })

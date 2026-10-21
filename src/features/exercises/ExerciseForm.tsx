@@ -34,7 +34,7 @@ const BLANK: ExerciseInput = {
   secondaryMuscles: [],
   equipment: 'barbell',
   tracking: 'weight_reps',
-  defaultRestS: 90,
+  defaultRestS: 0,
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -56,7 +56,7 @@ function MuscleChips({ value, onChange }: { value: Muscle[]; onChange: (v: Muscl
             key={m}
             type="button"
             onClick={() => onChange(on ? value.filter((x) => x !== m) : [...value, m])}
-            className={`rounded-full px-3 py-1 text-sm ${on ? 'bg-accent text-black' : 'bg-raised text-fg-soft'}`}
+            className={`rounded-full px-3 py-1 text-sm ${on ? 'bg-accent text-on-accent' : 'bg-raised text-fg-soft'}`}
           >
             {label(m)}
           </button>
@@ -112,7 +112,7 @@ export function ExerciseForm() {
         <button
           disabled={!form.name.trim() || form.primaryMuscles.length === 0}
           onClick={() => void save()}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-40"
         >
           Save
         </button>

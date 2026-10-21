@@ -1,4 +1,4 @@
-import { Play, Plus } from 'lucide-react'
+import { Pencil, Play, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { getDb } from '../../db/client'
@@ -56,7 +56,7 @@ export function WorkoutHome() {
         <button
           disabled={starting}
           onClick={() => void start()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-4 font-semibold text-black disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-4 font-semibold text-on-accent disabled:opacity-50"
         >
           <Plus size={20} /> Start empty workout
         </button>
@@ -77,15 +77,22 @@ export function WorkoutHome() {
         )}
 
         {routines?.map((r) => (
-          <div key={r.id} className="flex items-center gap-3 rounded-xl bg-surface p-4">
-            <Link to={`/routines/${r.id}`} className="min-w-0 flex-1">
+          <div key={r.id} className="flex items-center gap-2 rounded-xl bg-surface p-4">
+            <div className="min-w-0 flex-1">
               <p className="font-semibold">{r.name}</p>
               <p className="truncate text-sm text-muted">{r.exerciseNames.join(', ') || 'No exercises'}</p>
+            </div>
+            <Link
+              to={`/routines/${r.id}`}
+              aria-label={`Edit ${r.name}`}
+              className="flex items-center gap-1 rounded-lg bg-raised px-3 py-2 text-sm"
+            >
+              <Pencil size={14} /> Edit
             </Link>
             <button
               disabled={starting}
               onClick={() => void start(r.id)}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-50"
             >
               Start
             </button>

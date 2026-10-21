@@ -3,8 +3,9 @@
 /* Semantic colours. Components use these utilities (bg-surface, text-muted, …);
    the values switch with <html data-theme>, set from Settings → Theme. */
 @theme inline {
-  --color-accent: #f97316; /* buttons and fills, with black text, in both themes */
-  --color-accent-ink: var(--accent-ink); /* orange text */
+  --color-accent: var(--accent); /* buttons and fills */
+  --color-on-accent: var(--on-accent); /* text on accent fills */
+  --color-accent-ink: var(--accent-ink); /* accent-coloured text */
   --color-app: var(--app);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
@@ -22,7 +23,7 @@
   --color-bad: var(--bad);
   --color-info: var(--info);
   --color-special: var(--special);
-  /* Chart marks: palette orange step per theme, validated against --surface. */
+  /* Chart marks: palette step per theme, validated against --surface. */
   --color-chart: var(--chart);
   --color-chart-grid: var(--line);
   --color-chart-tick: var(--muted);
@@ -42,7 +43,9 @@
   --muted: #52525b;
   --subtle: #71717a;
   --faint: #a1a1aa;
-  --accent-ink: #c2410c;
+  --accent: #0e7490; /* cyan-leaning teal, distinct from the green 'done' colour */
+  --on-accent: #ffffff;
+  --accent-ink: #0e7490;
   --good: #047857;
   --good-soft: #d1fae5;
   --warn: #b45309;
@@ -50,7 +53,7 @@
   --bad: #dc2626;
   --info: #0369a1;
   --special: #7e22ce;
-  --chart: #eb6834;
+  --chart: #0891b2; /* cyan step that clears the chroma floor on white */
 }
 
 :root[data-theme='dark'] {
@@ -65,7 +68,9 @@
   --muted: #a1a1aa;
   --subtle: #71717a;
   --faint: #52525b;
-  --accent-ink: #f97316;
+  --accent: #facc15; /* yellow */
+  --on-accent: #000000;
+  --accent-ink: #facc15;
   --good: #34d399;
   --good-soft: rgb(2 44 34 / 0.6);
   --warn: #fbbf24;
@@ -73,7 +78,7 @@
   --bad: #f87171;
   --info: #38bdf8;
   --special: #c084fc;
-  --chart: #e8622a;
+  --chart: #c98500; /* palette's dark-mode yellow step */
 }
 
 html,
