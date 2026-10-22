@@ -13,6 +13,7 @@ import { estimatedOneRepMax, isWorkingSet, totalVolume } from '../../domain/sets
 import { formatVolume, formatWeight, toDisplayWeight } from '../../domain/units'
 import { formatClock, formatDuration } from '../../lib/format'
 import { useActiveWorkout } from '../../store/activeWorkout'
+import { useHealthConnect } from '../../store/healthConnect'
 import { useSettings } from '../../store/settings'
 import { useMaxHr } from '../heartRate/useMaxHr'
 import { StravaWorkoutStatus } from '../strava/StravaPanels'
@@ -127,6 +128,7 @@ export function WorkoutDetail() {
       onSelect: async () => {
         if (!confirm(`Delete "${workout.name}"? This can't be undone.`)) return
         await deleteWorkout(await getDb(), workout.id)
+        void useHealthConnect.getState().remove(workout.id)
         navigate('/history', { replace: true })
       },
     },
@@ -135,7 +137,9 @@ export function WorkoutDetail() {
   const saveMeta = (patch: Partial<Pick<Workout, 'name' | 'notes'>>) => {
     const next = { ...workout, ...patch }
     setWorkout(next)
-    void getDb().then((db) => updateWorkoutMeta(db, workout.id, { name: next.name, notes: next.notes }))
+    void getDb()
+      .then((db) => updateWorkoutMeta(db, workout.id, { name: next.name, notes: next.notes }))
+      .then(() => useHealthConnect.getState().save(workout.id))
   }
 
   return (

@@ -14,6 +14,7 @@ import { useProfile } from '../../store/profile'
 import { useSettings } from '../../store/settings'
 import { StravaConnection } from '../strava/StravaPanels'
 import { BackupPanel } from './BackupPanel'
+import { HealthConnectPanel } from './HealthConnectPanel'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -241,6 +242,7 @@ export function ProfilePage() {
 
       <HeartRateRow />
       <StravaConnection />
+      <HealthConnectPanel />
       <BackupPanel />
 
       <p className="text-center text-xs text-subtle">

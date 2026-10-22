@@ -53,9 +53,13 @@ STRAVA (OPTIONAL)
 • Connect your Strava account to upload workouts with your exercises, sets, heart rate and calories
 • Strava shows them as Weight Training with its own workout log and muscle map
 
+HEALTH CONNECT (OPTIONAL)
+• Save finished workouts to Health Connect with sets, heart rate and calories
+• Write-only: the app never reads your health data
+
 YOUR DATA STAYS YOURS
 • Everything is stored on your phone, not on our servers
-• Nothing is uploaded except to Strava, and only if you connect it
+• Nothing leaves your phone except to Strava, and only if you connect it
 • Export a backup file whenever you like
 • Light, dark or match-your-phone theme
 • kg or lb

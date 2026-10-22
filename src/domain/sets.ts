@@ -3,6 +3,17 @@ import type { LoggedSet } from '../db/repos/workouts'
 // Warm-ups are excluded from volume, PRs and set counts.
 export const isWorkingSet = (s: LoggedSet) => s.type !== 'warmup'
 
+// Sets only record when they were ticked off; estimate when each began
+// (timed sets use their duration), never before the workout started.
+const SECONDS_PER_REP = 3
+const MIN_SET_SECONDS = 15
+
+export function estimatedSetStart(s: LoggedSet, workoutStartedAt: number): number | null {
+  if (!s.completedAt) return null
+  const length = s.durationS ?? Math.max(MIN_SET_SECONDS, (s.reps ?? 0) * SECONDS_PER_REP)
+  return Math.max(workoutStartedAt, s.completedAt - length * 1000)
+}
+
 export function setVolume(s: LoggedSet): number {
   return isWorkingSet(s) ? (s.weightKg ?? 0) * (s.reps ?? 0) : 0
 }

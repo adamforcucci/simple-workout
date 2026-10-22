@@ -43,7 +43,17 @@ There's no login; Strava is optional and uses the user's own Strava account.
 
 ## Health apps declaration
 - Health & fitness features: **Activity and fitness**: tracks workouts and heart rate during exercise.
-- Health Connect: **No**, the app doesn't use Health Connect.
+- Health Connect: **Yes**, write-only, opt-in (Profile → Health Connect).
+  Fill in the **Health Connect permissions** form for each permission:
+
+  | Permission | Justification |
+  |---|---|
+  | `WRITE_EXERCISE` | Saves each finished gym workout as a strength-training exercise session, with a segment per set (exercise type and reps), so the user's other fitness apps can see it. |
+  | `WRITE_HEART_RATE` | Saves the heart rate recorded from the user's Bluetooth strap during that workout. |
+  | `WRITE_TOTAL_CALORIES_BURNED` | Saves the workout's estimated calories. |
+
+  No read permissions are requested. The privacy policy has a Health Connect
+  section, and the app's permissions-rationale screen opens it.
 - Medical or clinical features: **None.** (The Terms say it's not medical advice.)
 
 ## Data safety
@@ -51,6 +61,8 @@ There's no login; Strava is optional and uses the user's own Strava account.
 **Does your app collect or share any of the required user data types?** **Yes.**
 
 The answer is "Yes" only because of Strava, which is optional. Nothing is sent to us.
+Health Connect doesn't change these answers: it stores data on the phone, so
+writing to it isn't collection (it would be if we read it and sent it off the device).
 
 **Is all of the user data collected by your app encrypted in transit?** **Yes** (HTTPS only).
 

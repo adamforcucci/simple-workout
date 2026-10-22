@@ -8,10 +8,11 @@ export interface Settings {
   unit: WeightUnit
   restSound: boolean
   stravaAutoUpload: boolean
+  healthConnect: boolean
   theme: ThemePref
 }
 
-const DEFAULTS: Settings = { unit: 'kg', restSound: true, stravaAutoUpload: true, theme: 'system' }
+const DEFAULTS: Settings = { unit: 'kg', restSound: true, stravaAutoUpload: true, healthConnect: false, theme: 'system' }
 const KEY = 'settings'
 
 interface SettingsStore extends Settings {
@@ -29,7 +30,7 @@ export const useSettings = create<SettingsStore>((set, get) => ({
   },
   async update(patch) {
     set(patch)
-    const { unit, restSound, stravaAutoUpload, theme } = get()
-    await setJson(await getDb(), KEY, { unit, restSound, stravaAutoUpload, theme } satisfies Settings)
+    const { unit, restSound, stravaAutoUpload, healthConnect, theme } = get()
+    await setJson(await getDb(), KEY, { unit, restSound, stravaAutoUpload, healthConnect, theme } satisfies Settings)
   },
 }))

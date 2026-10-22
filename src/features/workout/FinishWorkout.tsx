@@ -13,6 +13,7 @@ import { totalVolume } from '../../domain/sets'
 import { formatVolume, formatWeight } from '../../domain/units'
 import { formatDuration } from '../../lib/format'
 import { routineChanged, routineFromWorkout, useActiveWorkout } from '../../store/activeWorkout'
+import { useHealthConnect } from '../../store/healthConnect'
 import { useProfile } from '../../store/profile'
 import { useSettings } from '../../store/settings'
 import { useStrava } from '../../store/strava'
@@ -108,6 +109,8 @@ export function FinishWorkout() {
       // Fire and forget: the workout page shows progress.
       if (!workout.editing && useSettings.getState().stravaAutoUpload && useStrava.getState().auth)
         void useStrava.getState().upload(id)
+      // Edits replace the copy in Health Connect.
+      void useHealthConnect.getState().save(id)
       navigate(`/history/${id}`, { replace: true })
     } finally {
       setSaving(false)

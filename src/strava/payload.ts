@@ -1,5 +1,6 @@
 import type { HrSample } from '../db/repos/hr'
 import type { Workout } from '../db/repos/workouts'
+import { estimatedSetStart } from '../domain/sets'
 import { toDisplayWeight, type WeightUnit } from '../domain/units'
 import { formatClock } from '../lib/format'
 
@@ -25,11 +26,6 @@ export interface StravaSet {
   start_time?: string
 }
 
-// Sets only record when they were ticked off; estimate when each began so
-// Strava's timeline is plausible (timed sets use their duration).
-const SECONDS_PER_REP = 3
-const MIN_SET_SECONDS = 15
-
 export function buildStrengthUpload(w: Workout, hr: HrSample[]): StravaStrengthUpload {
   const endedAt = w.endedAt ?? w.startedAt
   const sets: StravaSet[] = []
@@ -39,10 +35,8 @@ export function buildStrengthUpload(w: Workout, hr: HrSample[]): StravaStrengthU
       if (s.reps) set.repetitions = s.reps
       if (s.weightKg) set.weight = Math.round(s.weightKg * 100) / 100
       if (s.durationS) set.duration = s.durationS
-      if (s.completedAt) {
-        const length = s.durationS ?? Math.max(MIN_SET_SECONDS, (s.reps ?? 0) * SECONDS_PER_REP)
-        set.start_time = new Date(Math.max(w.startedAt, s.completedAt - length * 1000)).toISOString()
-      }
+      const start = estimatedSetStart(s, w.startedAt)
+      if (start !== null) set.start_time = new Date(start).toISOString()
       sets.push(set)
     }
   }

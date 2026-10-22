@@ -19,7 +19,7 @@ export default function Privacy() {
       <p>
         Adam&apos;s Workout App keeps your data on your phone. We don&apos;t run accounts, we don&apos;t have a copy of your workouts,
         and we don&apos;t sell or share your information. If you connect Strava, the app sends the workouts you choose to
-        Strava, and nowhere else.
+        Strava, and nowhere else. If you turn on Health Connect, it copies your workouts there, on your phone.
       </p>
 
       <h2>What the app stores on your phone</h2>
@@ -63,6 +63,17 @@ export default function Privacy() {
           Strava.
         </li>
       </ul>
+
+      <h2>Health Connect (Android)</h2>
+      <p>
+        Saving to Health Connect is optional and off until you turn it on in Profile → Health Connect and grant access.
+        When on, the app writes each finished workout to Health Connect on your phone: an exercise session (name, times,
+        notes, and each set&apos;s exercise type and reps), the heart rate readings recorded during it, and its estimated
+        calories. The app only writes; it never reads anything from Health Connect. Other apps can see this data only
+        if you give them access in Health Connect. Turn it off in the app, or remove the app&apos;s access in Health
+        Connect&apos;s settings, where you can also delete what it wrote. Deleting a workout in the app deletes its copy
+        in Health Connect too.
+      </p>
 
       <h2>What we (the developer) collect</h2>
       <p>

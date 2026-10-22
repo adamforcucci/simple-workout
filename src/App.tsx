@@ -18,6 +18,7 @@ import { WorkoutHome } from './features/workout/WorkoutHome'
 import { startWorkoutSession } from './features/workout/workoutSession'
 import { RoutineEditor } from './features/routines/RoutineEditor'
 import { useActiveWorkout } from './store/activeWorkout'
+import { useHealthConnect } from './store/healthConnect'
 import { useHeartRate } from './store/heartRate'
 import { useProfile } from './store/profile'
 import { useSettings } from './store/settings'
@@ -116,6 +117,9 @@ export default function App() {
   useEffect(() => {
     // Don't lose the last few keystrokes of a workout if Android kills us in the background.
     const pause = CapApp.addListener('pause', () => void useActiveWorkout.getState().flush())
+    // Health Connect access can be changed in its own settings while we're away.
+    const resume = CapApp.addListener('resume', () => void useHealthConnect.getState().load())
+    void useHealthConnect.getState().load()
     let stopSession: (() => void) | undefined
     Promise.all([
       useSettings.getState().load(),
@@ -133,6 +137,7 @@ export default function App() {
     return () => {
       stopSession?.()
       void pause.then((h) => h.remove())
+      void resume.then((h) => h.remove())
     }
   }, [])
 
