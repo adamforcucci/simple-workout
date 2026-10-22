@@ -1,47 +1,41 @@
-:root {
-  color-scheme: light dark;
-  --bg: #f4f4f5;
-  --fg: #18181b;
-  --muted: #52525b;
-  --accent: #0e7490;
+@import 'tailwindcss';
+
+@theme {
+  /* The app's accents: yellow (dark mode) and teal (light mode). */
+  --color-brand-yellow: #facc15;
+  --color-brand-teal: #0e7490;
+  --color-brand-teal-bright: #17b3c2;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #09090b;
-    --fg: #f4f4f5;
-    --muted: #a1a1aa;
-    --accent: #facc15;
-  }
+
+html {
+  color-scheme: dark;
+  background: #000;
 }
+
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  @apply bg-black font-sans text-zinc-100 antialiased;
 }
-main {
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 2.5rem 1rem 4rem;
+
+/* Long-form text (Privacy, Terms). */
+.doc h1 {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
 }
-h1 {
-  font-size: 1.75rem;
-  line-height: 1.2;
+.doc h2 {
+  @apply mt-10 mb-3 text-lg font-semibold text-white;
 }
-h2 {
-  margin-top: 2rem;
-  font-size: 1.15rem;
+.doc p,
+.doc li {
+  @apply leading-relaxed text-zinc-300;
 }
-a {
-  color: var(--accent);
+.doc p + p {
+  @apply mt-4;
 }
-.muted {
-  color: var(--muted);
+.doc ul {
+  @apply mt-3 list-disc space-y-2 pl-5 marker:text-brand-teal-bright;
 }
-.draft {
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--muted);
-  color: var(--muted);
-  font-size: 0.9rem;
+.doc strong {
+  @apply text-zinc-100;
+}
+.doc a {
+  @apply text-brand-yellow underline decoration-brand-yellow/40 underline-offset-4 hover:decoration-brand-yellow;
 }

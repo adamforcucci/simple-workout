@@ -7,10 +7,10 @@ const UPDATED = '22 October 2026'
 
 export default function Terms() {
   return (
-    <>
+    <article className="doc mx-auto max-w-3xl rounded-3xl border border-white/10 bg-black/60 p-6 backdrop-blur-xl sm:p-10">
       <h1>Terms of Use</h1>
-      <p className="muted">Last updated {UPDATED}</p>
-      <p className="draft">
+      <p className="mt-2 text-sm text-zinc-400">Last updated {UPDATED}</p>
+      <p className="mt-6 rounded-xl border border-brand-yellow/30 bg-brand-yellow/5 px-4 py-3 text-sm text-zinc-300">
         Draft for the private test release. To be reviewed by a lawyer before the app is offered to the public.
       </p>
 
@@ -55,6 +55,6 @@ export default function Terms() {
       <p>
         <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
       </p>
-    </>
+    </article>
   )
 }
