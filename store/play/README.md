@@ -26,14 +26,16 @@ Internal testing needs no Google review and supports up to 100 testers.
    - Copy the **opt-in link** and send it to testers. Each tester opens it,
      accepts, then installs from the Play Store.
 5. **Foreground service declaration.** If Play asks before the rollout, the wording
-   is in `declarations.md`. The video for it is still to record (screen recording of a
-   workout with the strap connected and the screen locked).
+   is in `declarations.md`. The video is `fgs-demo-redacted.mp4` (not in git): upload it
+   to YouTube as **Unlisted** and paste the link.
+6. **Health Connect declaration.** App content → **Health Connect**: one justification
+   per write permission, from `declarations.md`.
 
 **Every new build:** bump `versionCode` (and `versionName`) in
 `android/app/build.gradle`, rebuild the AAB, and create a new internal testing release.
 
 **Moving your own phone to the Play version:** the Play build is signed with the
-release key, so it can't install over the development build. First **Profile → Backup → Export**,
+release key, so it can't install over the development build. First **Profile → Backup → Save**,
 then uninstall the development build, install from the Play opt-in link, and use
 **Profile → Backup → Restore**. Strava needs reconnecting afterwards, because backups
 deliberately leave the sign-in out.
