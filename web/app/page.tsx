@@ -1,7 +1,5 @@
 import Image from 'next/image'
 
-const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL
-
 const PRINCIPLES = [
   { title: 'No ads', body: 'Nothing to sell you, nobody paying to reach you.' },
   { title: 'No accounts', body: 'Open the app and train. No sign-up, no email.' },
@@ -38,14 +36,13 @@ const FEATURES = [
 const SCREENS = [
   { src: '/screens/workout.webp', alt: 'A workout in progress with sets, a superset and the rest timer', caption: 'Log sets, rest, repeat' },
   { src: '/screens/heart-rate.webp', alt: 'A finished workout with its heart rate graph and time in zones', caption: 'Heart rate and zones' },
-  { src: '/screens/stats.webp', alt: 'Stats: weekly volume and workouts per week', caption: 'Weekly stats' },
   { src: '/screens/history.webp', alt: 'History calendar with workout days highlighted', caption: 'Every session, on a calendar' },
 ]
 
-function Phone({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
+function Phone({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="overflow-hidden rounded-[2rem] border border-white/15 bg-black p-1.5 shadow-2xl shadow-black/60">
-      <Image src={src} alt={alt} width={720} height={1440} priority={priority} className="h-auto w-full rounded-[1.6rem]" />
+      <Image src={src} alt={alt} width={720} height={1440} className="h-auto w-full rounded-[1.6rem]" />
     </div>
   )
 }
@@ -53,30 +50,17 @@ function Phone({ src, alt, priority }: { src: string; alt: string; priority?: bo
 export default function Home() {
   return (
     <div className="flex flex-col gap-24">
-      <section className="grid items-center gap-12 lg:grid-cols-[1fr_300px]">
-        <div className="max-w-2xl">
-          <p className="mb-4 text-sm font-semibold tracking-widest text-brand-yellow uppercase">Android · Private test</p>
-          <h1 className="text-4xl leading-[1.05] font-bold tracking-tight text-white sm:text-6xl">
-            Log your sets.
-            <br />
-            Keep your data.
-          </h1>
-          <p className="mt-6 text-lg leading-relaxed text-zinc-300">
-            A no-nonsense gym tracker: routines, supersets, rest timers, Bluetooth heart rate, and sync to Strava and
-            Health Connect, with everything stored on your phone.
-          </p>
-          {CONTACT && (
-            <a
-              href={`mailto:${CONTACT}?subject=Adam%27s%20Workout%20App%20test`}
-              className="mt-8 inline-flex rounded-full bg-brand-yellow px-6 py-3 font-semibold text-black transition hover:bg-yellow-300"
-            >
-              Ask to join the test
-            </a>
-          )}
-        </div>
-        <div className="mx-auto w-56 sm:w-64 lg:w-full">
-          <Phone src={SCREENS[0].src} alt={SCREENS[0].alt} priority />
-        </div>
+      <section className="max-w-2xl">
+        <p className="mb-4 text-sm font-semibold tracking-widest text-brand-yellow uppercase">Android · Private test</p>
+        <h1 className="text-4xl leading-[1.05] font-bold tracking-tight text-white sm:text-6xl">
+          Log your sets.
+          <br />
+          Keep your data.
+        </h1>
+        <p className="mt-6 text-lg leading-relaxed text-zinc-300">
+          A no-nonsense gym tracker: routines, supersets, rest timers, Bluetooth heart rate, and sync to Strava and
+          Health Connect, with everything stored on your phone.
+        </p>
       </section>
 
       <ul className="grid gap-4 sm:grid-cols-3">
@@ -103,8 +87,7 @@ export default function Home() {
 
       <section>
         <ul className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-8 sm:overflow-visible sm:px-0 lg:px-12">
-          {/* The first screen is already in the hero. */}
-          {SCREENS.slice(1).map((s) => (
+          {SCREENS.map((s) => (
             <li key={s.src} className="w-52 shrink-0 snap-center sm:w-auto">
               <Phone src={s.src} alt={s.alt} />
               <p className="mt-3 text-center text-sm text-zinc-400">{s.caption}</p>
