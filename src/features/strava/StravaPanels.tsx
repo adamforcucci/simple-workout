@@ -1,6 +1,9 @@
 import { Capacitor } from '@capacitor/core'
 import { CheckCircle2, ExternalLink, Loader2, RefreshCw, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import connectWithStrava from '../../assets/strava/connect-with-strava.svg'
+import poweredByStravaBlack from '../../assets/strava/powered-by-strava-black.svg'
+import poweredByStravaWhite from '../../assets/strava/powered-by-strava-white.svg'
 import { openLink, PRIVACY_URL } from '../../lib/links'
 import { useSettings } from '../../store/settings'
 import { useStrava } from '../../store/strava'
@@ -60,23 +63,26 @@ export function StravaConnection() {
             {auth ? `Connected as ${auth.athlete.firstname} ${auth.athlete.lastname}`.trim() : 'Not connected'}
           </p>
         </div>
-        {auth ? (
+        {auth && (
           <button
             onClick={() => confirm('Disconnect Strava? Already-uploaded activities stay on Strava.') && void disconnect()}
             className="rounded-lg bg-raised px-3 py-2 text-sm text-bad"
           >
             Disconnect
           </button>
-        ) : (
-          <button
-            disabled={!native || connecting}
-            onClick={() => setConsent(true)}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-50"
-          >
-            {connecting ? 'Waiting…' : 'Connect'}
-          </button>
         )}
       </div>
+      {!auth && (
+        // Strava's official button, unmodified, at its specified 48px height.
+        <button
+          disabled={!native || connecting}
+          onClick={() => setConsent(true)}
+          aria-label="Connect with Strava"
+          className="block disabled:opacity-50"
+        >
+          <img src={connectWithStrava} alt="Connect with Strava" className="h-12 w-auto" />
+        </button>
+      )}
       {!native && !auth && <p className="text-xs text-subtle">Connect from the phone app.</p>}
       {consent && (
         <StravaConsent
@@ -99,6 +105,11 @@ export function StravaConnection() {
           />
         </label>
       )}
+      {/* Strava's interoperability mark: white on dark, black on light. */}
+      <div className="border-t border-line pt-3">
+        <img src={poweredByStravaWhite} alt="Powered by Strava" className="theme-dark-only h-3.5 w-auto" />
+        <img src={poweredByStravaBlack} alt="Powered by Strava" className="theme-light-only h-3.5 w-auto" />
+      </div>
     </section>
   )
 }
@@ -139,9 +150,10 @@ export function StravaWorkoutStatus({ workoutId }: { workoutId: number }) {
           href={activityUrl(sync.activityId)}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1 rounded-lg bg-raised px-3 py-2 text-sm"
+          // Strava's guidelines: exactly "View on Strava", styled as a link (#FC5200).
+          className="flex items-center gap-1 px-1 py-2 text-sm font-semibold text-[#FC5200] underline underline-offset-4"
         >
-          View <ExternalLink size={14} />
+          View on Strava <ExternalLink size={14} />
         </a>
       )}
       {auth && !busy && sync?.status !== 'done' && (
