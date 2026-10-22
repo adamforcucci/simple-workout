@@ -32,3 +32,4 @@ dist-ssr
 
 # Copied from node_modules by the postinstall script.
 public/assets/sql-wasm.wasm
+store/play/*.mp4
