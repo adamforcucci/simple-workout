@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WorkoutServicePlugin.class);
         registerPlugin(ThemePlugin.class);
         registerPlugin(HealthConnectPlugin.class);
+        registerPlugin(BackupFilePlugin.class);
         super.onCreate(savedInstanceState);
         // Avoid a flash of the wrong colour (and wrong bar icons) before the page paints.
         boolean dark = ThemePlugin.savedIsDark(this);

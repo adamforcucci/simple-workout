@@ -2,18 +2,21 @@ import { Capacitor } from '@capacitor/core'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { format, parseISO } from 'date-fns'
-import { Download, Upload } from 'lucide-react'
+import { ArchiveRestore, Download, Share2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { exportBackup, importBackup } from '../../db/backup'
 import { getDb } from '../../db/client'
 import { getJson, setJson } from '../../db/repos/kv'
 import { plural } from '../../lib/format'
+import { BackupFile } from '../../native/backupFile'
 import { useActiveWorkout } from '../../store/activeWorkout'
 
 const LAST_BACKUP_KEY = 'lastBackupAt'
 
-// Resolves true only if the file was handed to another app (or downloaded).
-async function saveFile(filename: string, json: string): Promise<boolean> {
+type ExportMode = 'save' | 'share'
+
+// Resolves true only if the file was saved or handed to another app.
+async function exportFile(mode: ExportMode, filename: string, json: string): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
@@ -22,8 +25,10 @@ async function saveFile(filename: string, json: string): Promise<boolean> {
     URL.revokeObjectURL(a.href)
     return true
   }
-  // Written to the app cache, then handed to the share sheet (Drive, Files, email…).
+  // Written to the app cache, then copied to a folder on the phone (Downloads
+  // unless the user picks another) or handed to the share sheet (Drive, email…).
   const { uri } = await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 })
+  if (mode === 'save') return (await BackupFile.save({ filename, path: uri })).saved
   try {
     const { activityType } = await Share.share({ title: "Adam's Workout App backup", files: [uri] })
     return !!activityType
@@ -34,7 +39,7 @@ async function saveFile(filename: string, json: string): Promise<boolean> {
 
 export function BackupPanel() {
   const [lastBackup, setLastBackup] = useState<string | null>(null)
-  const [busy, setBusy] = useState<'export' | 'import' | null>(null)
+  const [busy, setBusy] = useState<ExportMode | 'import' | null>(null)
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -44,16 +49,16 @@ export function BackupPanel() {
       .then((v) => setLastBackup(v ?? null))
   }, [])
 
-  const doExport = async () => {
-    setBusy('export')
+  const doExport = async (mode: ExportMode) => {
+    setBusy(mode)
     setMessage(null)
     try {
       await useActiveWorkout.getState().flush()
       const db = await getDb()
       const backup = await exportBackup(db)
-      const shared = await saveFile(`adams-workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`, JSON.stringify(backup))
-      if (!shared) return
-      // Only once an app actually received the file.
+      const filename = `adams-workout-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`
+      if (!(await exportFile(mode, filename, JSON.stringify(backup)))) return
+      // Only once the file was actually saved or received by another app.
       const now = new Date().toISOString()
       await setJson(db, LAST_BACKUP_KEY, now)
       setLastBackup(now)
@@ -96,20 +101,15 @@ export function BackupPanel() {
           {lastBackup ? `Last backup ${format(parseISO(lastBackup), 'd MMM yyyy, h:mm a')}` : 'Never backed up'}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          disabled={busy !== null}
-          onClick={() => void doExport()}
-          className="flex items-center justify-center gap-2 rounded-lg bg-raised py-2.5 text-sm disabled:opacity-50"
-        >
-          <Upload size={16} /> {busy === 'export' ? 'Exporting…' : 'Export'}
+      <div className="grid grid-cols-3 gap-2">
+        <button disabled={busy !== null} onClick={() => void doExport('save')} className="flex items-center justify-center gap-2 rounded-lg bg-raised py-2.5 text-sm disabled:opacity-50">
+          <Download size={16} /> {busy === 'save' ? 'Saving…' : 'Save'}
         </button>
-        <button
-          disabled={busy !== null}
-          onClick={() => fileInput.current?.click()}
-          className="flex items-center justify-center gap-2 rounded-lg bg-raised py-2.5 text-sm disabled:opacity-50"
-        >
-          <Download size={16} /> {busy === 'import' ? 'Restoring…' : 'Restore'}
+        <button disabled={busy !== null} onClick={() => void doExport('share')} className="flex items-center justify-center gap-2 rounded-lg bg-raised py-2.5 text-sm disabled:opacity-50">
+          <Share2 size={16} /> {busy === 'share' ? 'Sharing…' : 'Share'}
+        </button>
+        <button disabled={busy !== null} onClick={() => fileInput.current?.click()} className="flex items-center justify-center gap-2 rounded-lg bg-raised py-2.5 text-sm disabled:opacity-50">
+          <ArchiveRestore size={16} /> {busy === 'import' ? 'Restoring…' : 'Restore'}
         </button>
       </div>
       <input
@@ -125,8 +125,8 @@ export function BackupPanel() {
       />
       {message && <p className={`text-sm ${message.error ? 'text-bad' : 'text-good'}`}>{message.text}</p>}
       <p className="text-xs text-subtle">
-        Everything stays on this phone, so export now and then (e.g. to Google Drive). Backups don't include your Strava
-        login.
+        Everything stays on this phone, so back up now and then. Save puts the file in Downloads (or a folder you pick);
+        Share sends it to Google Drive, email and so on. Backups don't include your Strava login.
       </p>
     </section>
   )
