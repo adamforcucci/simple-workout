@@ -2,9 +2,10 @@ import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef } from 'react'
 import { formatClock } from '../../lib/format'
 import { useNow } from '../../lib/useNow'
-import { useActiveWorkout, type ActiveWorkout } from '../../store/activeWorkout'
+import { useActiveWorkout } from '../../store/activeWorkout'
 import { useSettings } from '../../store/settings'
 import { restFinishedAlert } from './restAlert'
+import { nextUp } from './workoutUi'
 
 // Mounted once at the app root; clears finished rests on any screen. On the
 // phone the alert itself comes from the native service (screen-off safe);
@@ -23,15 +24,6 @@ export function RestWatcher() {
     skipRest()
   }, [rest, now, sound, skipRest])
 
-  return null
-}
-
-// The next set still to do, in workout order, for the "Next" line.
-function nextUp(w: ActiveWorkout | null): string | null {
-  for (const e of w?.exercises ?? []) {
-    const i = e.sets.findIndex((s) => s.completedAt === null)
-    if (i >= 0) return `${e.name} · set ${i + 1}`
-  }
   return null
 }
 

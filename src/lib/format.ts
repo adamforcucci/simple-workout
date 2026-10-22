@@ -26,3 +26,11 @@ export const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c
 
 // plural(1, 'workout') → '1 workout', plural(3, 'workout') → '3 workouts'
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+// Axis ticks: 950 → "950", 1350 → "1.35K", 24000 → "24K". Enough precision that
+// neighbouring ticks never round to the same label.
+export const compact = (v: number) => {
+  if (Math.abs(v) < 1000) return String(Math.round(v * 10) / 10)
+  const k = v / 1000
+  return `${Number(k.toFixed(Math.abs(k) >= 10 ? 1 : 2))}K`
+}

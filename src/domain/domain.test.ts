@@ -5,6 +5,7 @@ import { buildCatalog, displayName } from './exerciseCatalog'
 import { downsample, hrZone, maxHeartRate, timeInZones } from './heartRate'
 import { bestOneRepMax, estimatedOneRepMax, heaviestSet, totalVolume } from './sets'
 import { formatWeight, fromDisplayWeight, toDisplayWeight } from './units'
+import { compact } from '../lib/format'
 
 const set = (weightKg: number | null, reps: number | null, type: LoggedSet['type'] = 'normal'): LoggedSet => ({
   type,
@@ -131,5 +132,11 @@ describe('heart rate zones', () => {
     expect(d).toHaveLength(100)
     expect([d[0], d.at(-1)]).toEqual([0, 999])
     expect(downsample([1, 2], 100)).toEqual([1, 2])
+  })
+})
+
+describe('axis labels', () => {
+  test('adjacent ticks never collide', () => {
+    expect([950, 1300, 1350, 1400, 18000, 24000, 12500].map(compact)).toEqual(['950', '1.3K', '1.35K', '1.4K', '18K', '24K', '12.5K'])
   })
 })

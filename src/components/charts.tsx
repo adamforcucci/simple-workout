@@ -11,6 +11,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from 'recharts'
+import { compact } from '../lib/format'
 
 // Single-series charts: one validated hue (--color-chart), no legend (the card
 // title names the series), hairline recessive grid, tooltip on tap, and a
@@ -74,7 +75,6 @@ function TooltipCard({ active, payload, label, format }: TooltipContentProps<num
   )
 }
 
-const compact = (v: number) => (Math.abs(v) >= 1000 ? `${Math.round(v / 100) / 10}K` : String(Math.round(v * 10) / 10))
 
 interface ChartProps {
   data: Point[]
@@ -95,7 +95,7 @@ export function TrendChart({ data, formatValue, height = 180 }: ChartProps) {
           tick={TICK}
           tickLine={false}
           axisLine={false}
-          width={44}
+          width={52}
           tickFormatter={compact}
           domain={[Math.floor(Math.min(...values) - pad), Math.ceil(Math.max(...values) + pad)]}
         />
@@ -128,7 +128,7 @@ export function ColumnChart({ data, formatValue, height = 180 }: ChartProps) {
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }} barCategoryGap={2}>
         <CartesianGrid vertical={false} stroke={GRID} strokeWidth={1} />
         <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={{ stroke: GRID }} minTickGap={16} />
-        <YAxis tick={TICK} tickLine={false} axisLine={false} width={44} tickFormatter={compact} allowDecimals={false} />
+        <YAxis tick={TICK} tickLine={false} axisLine={false} width={52} tickFormatter={compact} allowDecimals={false} />
         <Tooltip
           cursor={{ fill: 'var(--color-chart-band)', opacity: 0.6 }}
           content={(p) => <TooltipCard {...(p as TooltipContentProps<number, string>)} format={formatValue} />}
@@ -148,8 +148,9 @@ export function BarList({ data, formatValue }: Omit<ChartProps, 'height'>) {
         <li key={d.label} className="grid grid-cols-[6.5rem_1fr] items-center gap-3 text-sm">
           <span className="truncate text-muted">{d.label}</span>
           <span className="flex items-center gap-2">
-            <span className="h-3 rounded-r-[4px]" style={{ width: `${(d.value / max) * 85}%`, background: MARK }} />
-            <span className="text-xs text-fg-soft tabular-nums">{formatValue(d.value)}</span>
+            {/* Bars stop short of the edge so the value label always fits on one line. */}
+            <span className="h-3 rounded-r-[4px]" style={{ width: `${(d.value / max) * 70}%`, background: MARK }} />
+            <span className="text-xs whitespace-nowrap text-fg-soft tabular-nums">{formatValue(d.value)}</span>
           </span>
         </li>
       ))}
