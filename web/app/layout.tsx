@@ -16,19 +16,11 @@ const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL
 
 function Header() {
   return (
-    <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+    <header className="mx-auto flex w-full max-w-5xl items-center px-5 py-5 sm:px-8">
       <Link href="/" className="flex items-center gap-3 font-semibold tracking-tight">
         <Image src="/icon-512.png" alt="" width={36} height={36} className="rounded-[10px]" priority />
         <span className="text-white">Adam&apos;s Workout App</span>
       </Link>
-      <nav className="flex items-center gap-5 text-sm text-zinc-300">
-        <Link href="/privacy" className="hover:text-white">
-          Privacy
-        </Link>
-        <Link href="/terms" className="hover:text-white">
-          Terms
-        </Link>
-      </nav>
     </header>
   )
 }
