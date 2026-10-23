@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pre-Android 12 launch screen: dark background with the app icon centred. -->
+<!-- Pre-Android 12 launch screen: app background with the app icon centred. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/app_background" />
-    <item android:width="96dp" android:height="96dp" android:gravity="center">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/ic_launcher_background" />
-            <corners android:radius="22dp" />
-        </shape>
-    </item>
-    <item android:width="96dp" android:height="96dp" android:gravity="center" android:drawable="@drawable/ic_launcher_dumbbell" />
+    <item android:width="96dp" android:height="96dp" android:gravity="center" android:drawable="@drawable/launch_icon" />
 </layer-list>
