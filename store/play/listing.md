@@ -60,7 +60,7 @@ HEALTH CONNECT (OPTIONAL)
 YOUR DATA STAYS YOURS
 • Everything is stored on your phone, not on our servers
 • Nothing leaves your phone except to Strava, and only if you connect it
-• Export a backup file whenever you like
+• Save or share a backup file whenever you like
 • Light, dark or match-your-phone theme
 • kg or lb
 
